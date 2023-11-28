@@ -8,17 +8,20 @@
 
 __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass) {
 	int row = threadIdx.x + blockIdx.x * blockDim.x;
+	int col = threadIdx.y + blockIdx.y * blockDim.y;
+	int z = threadIdx.z;
+	
 	int stride = blockDim.x * gridDim.x; //how many operations to do each group
 	int i, j, k;
 
 	//first compute the pairwise accelerations.  Effect is on the first argument.
 	for (i=row; i < NUMENTITIES; i += stride) {
-		for (j=0; j < NUMENTITIES; j++) {
+		for (j=col; j < NUMENTITIES; j++) {
 			if (i == j) {
 				FILL_VECTOR(accels[i][j], 0, 0, 0);
 			} else {
 				vector3 distance;
-				for (k=0;k<3;k++) {
+				for (k=z;k<3;k++) {
 					distance[k] = hPos[i][k] - hPos[j][k];
 				}
 				double magnitude_sq = distance[0] * distance[0] + distance[1] * distance[1] + distance[2] * distance[2];
@@ -29,6 +32,7 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass) {
 		}
 	}
 }
+
 __global__ void compute_velocities(vector3 **accels, vector3 *hVel, vector3 *hPos) {
 	int row = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x; //how many operations to do each group

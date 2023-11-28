@@ -137,10 +137,8 @@ int main(int argc, char **argv)
 	cudaMemcpy(d_accels, accels, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice);
 
 	//* Call compute
-	int count = 0;
 	for (t_now=0;t_now<DURATION;t_now+=INTERVAL) {
 		compute();
-		count++;
 	}
 
 	// Copy variables from device to host
@@ -162,9 +160,6 @@ int main(int argc, char **argv)
 	printSystem(stdout);
 #endif
 	printf("This took a total time of %f seconds\n",(double)t1/CLOCKS_PER_SEC);
-
-	//* debug
-	printf("COUNTER:  %d\n", count);
 
 	freeHostMemory();
 }
