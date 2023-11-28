@@ -110,7 +110,7 @@ int main(int argc, char **argv)
 	clock_t t1=clock()-t0;
 #ifdef DEBUG
 	printSystem(stdout);
-	printf("COUNTER:  %d\n", count)
+	printf("COUNTER:  %d\n", count);
 
 #endif
 	printf("This took a total time of %f seconds\n",(double)t1/CLOCKS_PER_SEC);
