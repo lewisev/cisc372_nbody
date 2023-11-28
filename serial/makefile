@@ -10,3 +10,5 @@ compute.o: compute.c config.h vector.h $(ALWAYS_REBUILD)
 	gcc $(FLAGS) -c $< 
 clean:
 	rm -f *.o nbody 
+run: nbody
+	srun ./nbody > out.txt
