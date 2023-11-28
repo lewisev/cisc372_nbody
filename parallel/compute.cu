@@ -35,7 +35,7 @@ __global__ void compute_velocities(vector3 **accels, vector3 *hVel, vector3 *hPo
 	int i, j, k;
 
 	//sum up the rows of our matrix to get effect on each entity, then update velocity and position.
-	for (i=row; i < NUMENTITIES; i+=stride) {
+	for (i=row; i < NUMENTITIES; i += stride) {
 		vector3 accel_sum = {0, 0, 0};
 		for (j=0; j < NUMENTITIES; j++) { // kernel
 			for (k=0; k < 3; k++) {

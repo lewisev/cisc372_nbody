@@ -92,7 +92,7 @@ void printSystem(FILE* handle){
 		for (j=0;j<3;j++){
 			fprintf(handle,"%lf,",hVel[i][j]);
 		}
-		fprintf(handle,"),m=%lf\n",mass[i]);
+		//fprintf(handle,"),m=%lf\n",mass[i]); //todo: uncomment this line to show mass
 	}
 }
 
@@ -137,8 +137,10 @@ int main(int argc, char **argv)
 	cudaMemcpy(d_accels, accels, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice);
 
 	//* Call compute
+	int count = 0;
 	for (t_now=0;t_now<DURATION;t_now+=INTERVAL) {
 		compute();
+		count++;
 	}
 
 	// Copy variables from device to host
@@ -158,6 +160,9 @@ int main(int argc, char **argv)
 	clock_t t1=clock()-t0;
 #ifdef DEBUG
 	printSystem(stdout);
+
+	//* debug
+	printf("COUNTER:  %d\n", count)
 #endif
 	printf("This took a total time of %f seconds\n",(double)t1/CLOCKS_PER_SEC);
 
