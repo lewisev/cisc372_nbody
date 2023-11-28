@@ -85,7 +85,9 @@ void printSystem(FILE* handle){
 		for (j=0;j<3;j++){
 			fprintf(handle,"%lf,",hVel[i][j]);
 		}
-		fprintf(handle,"),m=%lf\n",mass[i]);
+		//fprintf(handle,"),m=%lf\n",mass[i]);
+
+		printf("\n");
 	}
 }
 

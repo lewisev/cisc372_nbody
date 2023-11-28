@@ -93,6 +93,8 @@ void printSystem(FILE* handle){
 			fprintf(handle,"%lf,",hVel[i][j]);
 		}
 		//fprintf(handle,"),m=%lf\n",mass[i]); //todo: uncomment this line to show mass
+
+		printf("\n");
 	}
 }
 
