@@ -10,7 +10,9 @@
 // represents the objects in the system.  Global variables
 vector3 *hVel, *d_hVel;
 vector3 *hPos, *d_hPos;
-double *mass;
+double *mass, *d_mass;
+
+vector3 **d_accels, *d_values;
 
 //initHostMemory: Create storage for numObjects entities in our system
 //Parameters: numObjects: number of objects to allocate
@@ -113,20 +115,29 @@ int main(int argc, char **argv)
 	cudaMalloc((void**) &d_hPos, sizeof(vector3) * NUMENTITIES);
 	cudaMalloc((void**) &d_mass, sizeof(double) * NUMENTITIES);
 
+	// create values and accels
+	///Changed these to cudaMalloc on host,dont need them done everytime in compute loop
+	vector3* values = (vector3*) malloc(sizeof(vector3) * NUMENTITIES*NUMENTITIES);
+	vector3** accels = (vector3**) malloc(sizeof(vector3*) * NUMENTITIES);
+
+	//make an acceleration matrix which is NUMENTITIES squared in size;
+	for (i=0; i < NUMENTITIES; i++) {
+		accels[i] =& values[i * NUMENTITIES];
+	}
+
 	cudaMalloc((void**) &d_values, sizeof(vector3) * NUMENTITIES);
 	cudaMalloc((void**) &d_accels, sizeof(vector3*) * NUMENTITIES * NUMENTITIES);
-
-	//Changed these to cudaMalloc on host,dont need them done everytime in compute loop
-	//vector3* values = (vector3*) malloc(sizeof(vector3) * NUMENTITIES*NUMENTITIES);
-	//vector3** accels = (vector3**) malloc(sizeof(vector3*) * NUMENTITIES);
 
 	// Copy variables from host to device
 	cudaMemcpy(d_hVel, h_Vel, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_hPos, h_Pos, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_mass, mass, sizeof(double) * NUMENTITIES, cudaMemcpyHostToDevice);
 
+	cudaMemcpy(d_values, values, sizeof(vector3) * NUMENTITIES*NUMENTITIES, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_accels, accels, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice);
+
 	//* Call compute
-	for (t_now=0;t_now<DURATION;t_now+=INTERVAL){
+	for (t_now=0;t_now<DURATION;t_now+=INTERVAL) {
 		compute();
 	}
 
@@ -135,11 +146,14 @@ int main(int argc, char **argv)
 	cudaMemcpy(h_Pos, d_hPos, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
 
 	//free all cuda memory
-	cudaFree(d_hVel)
-	cudaFree(d_hPos)
-	cudaFree(d_mass)
-	cudaFree(d_values)
-	cudaFree(d_accels)
+	cudaFree(d_hVel);
+	cudaFree(d_hPos);
+	cudaFree(d_mass);
+	cudaFree(d_values);
+	cudaFree(d_accels);
+
+	free(values);
+	free(accels);
 
 	clock_t t1=clock()-t0;
 #ifdef DEBUG
