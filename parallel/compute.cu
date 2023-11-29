@@ -17,7 +17,7 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass) {
 	if (i == j) {
 		FILL_VECTOR(accels[i][j], 0, 0, 0);
 	} else {
-		vector3 distance;
+		__shared__ vector3 distance;
 		distance[k] = hPos[i][k] - hPos[j][k];
 
 		__syncthreads(); // sync to make sure all distances have been calculated
@@ -34,12 +34,18 @@ __global__ void compute_velocities(vector3 **accels, vector3 *hVel, vector3 *hPo
 	int j = threadIdx.y + blockDim.x * gridDim.x; //how many operations to do each group
 	int k = threadIdx.z;
 
+	if(i >= NUMENTITIES) return;
+
 	//sum up the rows of our matrix to get effect on each entity, then update velocity and position.
+	/*
 	vector3 accel_sum = {0, 0, 0};
 	accel_sum[k] += accels[i][j][k]; //accel_sum local, accels is global
+	*/
+
+
 	//compute the new velocity based on the acceleration and time interval
 	//compute the new position based on the velocity and time interval
-	hVel[i][k] += accel_sum[k] * INTERVAL;
+	hVel[i][k] += accels[i][j][k] * INTERVAL;
 	hPos[i][k] += hVel[i][k] * INTERVAL;
 }
 //compute: Updates the positions and locations of the objects in the system based on gravity.
@@ -54,13 +60,36 @@ void compute() {
 	int num_blocks = 256;
 	int block_size = (NUMENTITIES - 1) / num_blocks + 1; */
 
-	dim3 block_dim = (SQUARE_SIZE, BLOCK_SIZE, 3);
+	int block_size = (NUMENTITIES - 1) / BLOCK_SIZE + 1;
+					//NUMENTITIES -1) / 16 + 1
 
-	compute_accels<<<SQUARE_SIZE, BLOCK_SIZE>>>(d_accels, d_hPos, d_mass);
+	dim3 block_dim = (BLOCK_SIZE, BLOCK_SIZE, 3);
+	dim3 block = (block_size, block_size);
+
+	compute_accels<<<block, block_dim>>>(accels, d_hPos, d_mass);
 	cudaDeviceSynchronize(); //todo: Maybe not needed if result stays the same without?
 	
-	compute_velocities<<<SQUARE_SIZE, BLOCK_SIZE>>>(d_accels, d_hVel, d_hPos);
-	cudaDeviceSynchronize(); //todo: Maybe not needed if result stays the same without?
+	
+	for (i=0; i < NUMENTITIES; i++){
+		vector3 accel_sum = {0, 0, 0};
+		for (j=0; j < NUMENTITIES; j++) {
+			for (k=0; k < 3; k++) {
+				accel_sum[k] += accels[i][j][k];
+			}
+		}
+		//compute the new velocity based on the acceleration and time interval
+		//compute the new position based on the velocity and time interval
+		for (k=0; k < 3; k++) {
+			hVel[i][k] += accel_sum[k] * INTERVAL;
+			hPos[i][k] += hVel[i][k] * INTERVAL;
+		}
+	}
+
+
+
+
+	//compute_velocities<<<block, block_dim>>>(accels, d_hVel, d_hPos);
+	//cudaDeviceSynchronize(); //todo: Maybe not needed if result stays the same without?
 	// done in nbody.cu
 	/* for (i=0; i < NUMENTITIES; i++) {
 		accels[i] =& values[i * NUMENTITIES];

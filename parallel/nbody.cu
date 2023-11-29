@@ -83,13 +83,13 @@ void randomFill(int start, int count)
 //! does not change for parallelizing
 void printSystem(FILE* handle){
 	int i,j;
-	for (i=0;i<NUMENTITIES;i++){
+	for (i=0; i < NUMENTITIES; i++){
 		fprintf(handle,"pos=(");
-		for (j=0;j<3;j++){
+		for (j=0; j < 3; j++){
 			fprintf(handle,"%lf,",hPos[i][j]);
 		}
 		printf("),v=(");
-		for (j=0;j<3;j++){
+		for (j=0;j < 3; j++){
 			fprintf(handle,"%lf,",hVel[i][j]);
 		}
 		//fprintf(handle,"),m=%lf\n",mass[i]); //todo: uncomment this line to show mass
@@ -128,7 +128,11 @@ int main(int argc, char **argv)
 	}
 
 	cudaMalloc((void**) &d_values, sizeof(vector3) * NUMENTITIES);
-	cudaMalloc((void**) &d_accels, sizeof(vector3*) * NUMENTITIES * NUMENTITIES);
+	//cudaMalloc((void**) &d_accels, sizeof(vector3*) * NUMENTITIES * NUMENTITIES);
+
+	//* Temporary debug - managed malloc
+	cudaMallocManaged((void**) &accels, sizeof(vector3*)*NUMENTITIES);
+	//*
 
 	// Copy variables from host to device
 	cudaMemcpy(d_hVel, hVel, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice);
@@ -136,7 +140,7 @@ int main(int argc, char **argv)
 	cudaMemcpy(d_mass, mass, sizeof(double) * NUMENTITIES, cudaMemcpyHostToDevice);
 
 	cudaMemcpy(d_values, values, sizeof(vector3) * NUMENTITIES*NUMENTITIES, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_accels, accels, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice);
+	//cudaMemcpy(d_accels, accels, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice);
 
 	//* Call compute
 	for (t_now=0;t_now<DURATION;t_now+=INTERVAL) {
@@ -152,7 +156,7 @@ int main(int argc, char **argv)
 	cudaFree(d_hPos);
 	cudaFree(d_mass);
 	cudaFree(d_values);
-	cudaFree(d_accels);
+	//cudaFree(d_accels);
 
 	free(values);
 	free(accels);

@@ -21,5 +21,4 @@
 
 //Define CUDA sizes
 #define BLOCK_SIZE 16
-#define SQUARE_SIZE 16
 #endif
