@@ -66,9 +66,14 @@ void compute() {
 	dim3 block_dim (BLOCK_SIZE, BLOCK_SIZE, 3);
 	dim3 block (block_size, block_size);
 
-	compute_accels<<<block, block_dim>>>(&accels, d_hPos, d_mass);
+
+
+	compute_accels<<<block, block_dim>>>(d_accels, d_hPos, d_mass);
 	cudaDeviceSynchronize(); //todo: Maybe not needed if result stays the same without?
 	
+
+	vector3 **accels;
+	cudaMemcpy(accels, d_accels, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
 
 	int i,j,k;
 

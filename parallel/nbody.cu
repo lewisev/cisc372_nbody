@@ -9,7 +9,7 @@
 
 // represents the objects in the system.  Global variables
 vector3 *hVel, *d_hVel;
-vector3 *hPos, *d_hPos, **accels;
+vector3 *hPos, *d_hPos;
 double *mass, *d_mass;
 
 vector3 **d_accels, *d_values;
@@ -120,11 +120,7 @@ int main(int argc, char **argv)
 	// create values and accels
 	///Changed these to cudaMalloc on host,dont need them done everytime in compute loop
 	vector3* values = (vector3*) malloc(sizeof(vector3) * NUMENTITIES*NUMENTITIES);
-	//vector3** accels = (vector3**) malloc(sizeof(vector3*) * NUMENTITIES);
-
-	//* Temporary debug - managed malloc
-	cudaMallocManaged((void**) &accels, sizeof(vector3*)*NUMENTITIES);
-	//*
+	vector3** accels = (vector3**) malloc(sizeof(vector3*) * NUMENTITIES);
 
 	//make an acceleration matrix which is NUMENTITIES squared in size;
 	for (int i=0; i < NUMENTITIES; i++) {
@@ -132,8 +128,7 @@ int main(int argc, char **argv)
 	}
 
 	cudaMalloc((void**) &d_values, sizeof(vector3) * NUMENTITIES);
-	//cudaMalloc((void**) &d_accels, sizeof(vector3*) * NUMENTITIES * NUMENTITIES);
-
+	cudaMalloc((void**) &d_accels, sizeof(vector3*) * NUMENTITIES);
 	
 
 	// Copy variables from host to device
@@ -142,7 +137,7 @@ int main(int argc, char **argv)
 	cudaMemcpy(d_mass, mass, sizeof(double) * NUMENTITIES, cudaMemcpyHostToDevice);
 
 	cudaMemcpy(d_values, values, sizeof(vector3) * NUMENTITIES*NUMENTITIES, cudaMemcpyHostToDevice);
-	//cudaMemcpy(d_accels, accels, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_accels, accels, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice);
 
 	//* Call compute
 	for (t_now=0;t_now<DURATION;t_now+=INTERVAL) {
@@ -150,15 +145,15 @@ int main(int argc, char **argv)
 	}
 
 	// Copy variables from device to host
-	cudaMemcpy(hVel, d_hVel, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
-	cudaMemcpy(hPos, d_hPos, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
+	//cudaMemcpy(hVel, d_hVel, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
+	//cudaMemcpy(hPos, d_hPos, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
 
 	//free all cuda memory
 	cudaFree(d_hVel);
 	cudaFree(d_hPos);
 	cudaFree(d_mass);
 	cudaFree(d_values);
-	//cudaFree(d_accels);
+	cudaFree(d_accels);
 
 	free(values);
 	free(accels);
