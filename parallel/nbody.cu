@@ -12,7 +12,7 @@ vector3 *hVel, *d_hVel;
 vector3 *hPos, *d_hPos;
 double *mass, *d_mass;
 
-vector3 **d_accels, *d_values, **accels;
+vector3 **d_accels, *d_values;
 
 //initHostMemory: Create storage for numObjects entities in our system
 //Parameters: numObjects: number of objects to allocate
@@ -83,13 +83,13 @@ void randomFill(int start, int count)
 //! does not change for parallelizing
 void printSystem(FILE* handle){
 	int i,j;
-	for (i=0; i < NUMENTITIES; i++){
+	for (i=0;i<NUMENTITIES;i++){
 		fprintf(handle,"pos=(");
-		for (j=0; j < 3; j++){
+		for (j=0;j<3;j++){
 			fprintf(handle,"%lf,",hPos[i][j]);
 		}
 		printf("),v=(");
-		for (j=0;j < 3; j++){
+		for (j=0;j<3;j++){
 			fprintf(handle,"%lf,",hVel[i][j]);
 		}
 		//fprintf(handle,"),m=%lf\n",mass[i]); //todo: uncomment this line to show mass
@@ -128,8 +128,7 @@ int main(int argc, char **argv)
 	}
 
 	cudaMalloc((void**) &d_values, sizeof(vector3) * NUMENTITIES);
-	cudaMalloc((void**) &d_accels, sizeof(vector3*) * NUMENTITIES);
-	
+	cudaMalloc((void**) &d_accels, sizeof(vector3*) * NUMENTITIES * NUMENTITIES);
 
 	// Copy variables from host to device
 	cudaMemcpy(d_hVel, hVel, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice);
@@ -145,8 +144,8 @@ int main(int argc, char **argv)
 	}
 
 	// Copy variables from device to host
-	//cudaMemcpy(hVel, d_hVel, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
-	//cudaMemcpy(hPos, d_hPos, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
+	cudaMemcpy(hVel, d_hVel, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
+	cudaMemcpy(hPos, d_hPos, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
 
 	//free all cuda memory
 	cudaFree(d_hVel);
