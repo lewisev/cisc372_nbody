@@ -18,4 +18,8 @@
 //End Configurable
 
 #define NUMENTITIES (NUMPLANETS+NUMASTEROIDS+1)
+
+//Define CUDA sizes
+#define BLOCK_SIZE 16
+#define SQUARE_SIZE 16
 #endif
