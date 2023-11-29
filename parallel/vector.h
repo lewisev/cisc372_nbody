@@ -6,6 +6,6 @@ typedef double vector3[3];
 extern vector3 *hVel, *d_hVel;
 extern vector3 *hPos, *d_hPos;
 extern double *mass, *d_mass;
-extern vector3 **d_accels, *d_values;
+extern vector3 **d_accels, *d_values, **accels;
 
 #endif
