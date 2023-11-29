@@ -70,6 +70,8 @@ void compute() {
 	cudaDeviceSynchronize(); //todo: Maybe not needed if result stays the same without?
 	
 
+	int i,j,k;
+	
 	for (i=0; i < NUMENTITIES; i++){
 		vector3 accel_sum = {0, 0, 0};
 		for (j=0; j < NUMENTITIES; j++) {
