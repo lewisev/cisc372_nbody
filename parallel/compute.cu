@@ -56,10 +56,10 @@ void compute() {
 
 	dim3 block_dim = (SQUARE_SIZE, BLOCK_SIZE, 3);
 
-	compute_accels<<<block_dim>>>(d_accels, d_hPos, d_mass);
+	compute_accels<<<SQUARE_SIZE, BLOCK_SIZE>>>(d_accels, d_hPos, d_mass);
 	cudaDeviceSynchronize(); //todo: Maybe not needed if result stays the same without?
 	
-	compute_velocities<<<block_dim>>>(d_accels, d_hVel, d_hPos);
+	compute_velocities<<<SQUARE_SIZE, BLOCK_SIZE>>>(d_accels, d_hVel, d_hPos);
 	cudaDeviceSynchronize(); //todo: Maybe not needed if result stays the same without?
 	// done in nbody.cu
 	/* for (i=0; i < NUMENTITIES; i++) {
