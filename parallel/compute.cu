@@ -30,10 +30,10 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass) {
 }
 
 __global__ void compute_velocities(vector3 **accels, vector3 *hVel, vector3 *hPos) {
-	int i = threadIdx.x + blockIdx.x * blockDim.x;
-	int j = threadIdx.y + blockDim.x * gridDim.x; //how many operations to do each group
-	int k = threadIdx.z;
-
+	//int i = threadIdx.x + blockIdx.x * blockDim.x;
+	//int j = threadIdx.y + blockDim.x * gridDim.x; //how many operations to do each group
+	//int k = threadIdx.z;
+`	int i=blockIdx.x;
 	//sum up the rows of our matrix to get effect on each entity, then update velocity and position.
 	vector3 accel_sum = {0, 0, 0};
 	accel_sum[k] += accels[i][j][k]; //accel_sum local, accels is global
@@ -42,7 +42,7 @@ __global__ void compute_velocities(vector3 **accels, vector3 *hVel, vector3 *hPo
 	hVel[i][k] += accel_sum[k] * INTERVAL;
 	hPos[i][k] += hVel[i][k] * INTERVAL;
 }
-//compute: Updates the positions and locations of the objects in the system based on gravity.
+//compute: Updates the positions and locations of the objects in the system nbased on gravity.
 //Parameters: None
 //Returns: None
 //Side Effect: Modifies the hPos and hVel arrays with the new positions and accelerations after 1 INTERVAL
@@ -53,13 +53,13 @@ void compute() {
 	/* Probably can get rid of these
 	int num_blocks = 256;
 	int block_size = (NUMENTITIES - 1) / num_blocks + 1; */
+	dim3 square_block_dim (BLOCK_SIZE, BLOCK_SIZE, 3);
+	dim3 block_dim ((NUMENTITIES+15)/16, (NUMENTITIES+15)/16, 3);
 
-	dim3 block_dim (BLOCK_SIZE, BLOCK_SIZE, 3);
-
-	compute_accels<<<BLOCK_SIZE, BLOCK_SIZE>>>(d_accels, d_hPos, d_mass);
+	compute_accels<<<square_block_dim, block_dim>>>(d_accels, d_hPos, d_mass);
 	cudaDeviceSynchronize(); //todo: Maybe not needed if result stays the same without?
 	
-	compute_velocities<<<BLOCK_SIZE, BLOCK_SIZE>>>(d_accels, d_hVel, d_hPos);
+	compute_velocities<<<NUMENTITIES, 1>>>(d_accels, d_hVel, d_hPos);
 	cudaDeviceSynchronize(); //todo: Maybe not needed if result stays the same without?
 	// done in nbody.cu
 	/* for (i=0; i < NUMENTITIES; i++) {

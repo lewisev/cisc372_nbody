@@ -128,7 +128,7 @@ int main(int argc, char **argv)
 	}
 
 	cudaMalloc((void**) &d_values, sizeof(vector3) * NUMENTITIES);
-	cudaMalloc((void**) &d_accels, sizeof(vector3*) * NUMENTITIES * NUMENTITIES);
+	cudaMalloc((void**) &d_accels, sizeof(vector3) * NUMENTITIES * NUMENTITIES);
 
 	// Copy variables from host to device
 	cudaMemcpy(d_hVel, hVel, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice);
