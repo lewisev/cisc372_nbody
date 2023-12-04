@@ -3,143 +3,99 @@
 #include "vector.h"
 #include "config.h"
 #include "compute.h"
-#include <stdio.h>
+//make an acceleration matrix which is NUMENTITIES squared in size;
+__global__ void constructAccels(vector3* values, vector3** accels){
+        int in = threadIdx.x;
+        if(in < NUMENTITIES){
+            accels[in]=&values[in*NUMENTITIES];
+        }
+}
 
-extern vector3 **d_accels, *d_hPos, *d_hVel, *d_accel_sum;
-//declare mass array
-extern double *d_mass;
+//first compute the pairwise accelerations.  Effect is on the first argument.
+__global__ void computePairwiseAccels(vector3 **accels, vector3 *values, vector3 *hPos, vector3 *hvel, double *mass){
+	int in = blockIdx.x * blockDim.x + threadIdx.x;
+	int stride = blockDim.x * gridDim.x;
+	int i, j, k;
+
+	for (i=in;i<NUMENTITIES;i+=stride){
+		for (j=0;j<NUMENTITIES;j++){
+			if (i==j) {
+				FILL_VECTOR(accels[i][j],0,0,0);
+			}
+			else{
+				vector3 distance;
+				for (k=0;k<3;k++) distance[k]=hPos[i][k]-hPos[j][k];
+				double magnitude_sq=distance[0]*distance[0]+distance[1]*distance[1]+distance[2]*distance[2];
+				double magnitude=sqrt(magnitude_sq);
+				double accelmag=-1*GRAV_CONSTANT*mass[j]/magnitude_sq;
+				FILL_VECTOR(accels[i][j],accelmag*distance[0]/magnitude,accelmag*distance[1]/magnitude,accelmag*distance[2]/magnitude);
+			}
+		}
+	}
+}
+
+//sum up the rows of our matrix to get effect on each entity, then update velocity and position.
+__global__ void computeSum(vector3 **accels, vector3 *hPos, vector3 *hVel){
+	int in = blockIdx.x * blockDim.x + threadIdx.x;
+	int stride = blockDim.x * gridDim.x;
+	int i, j, k;
+
+	for (i=in;i<NUMENTITIES;i+=stride){
+		vector3 accel_sum={0,0,0};
+		for (j=0;j<NUMENTITIES;j++){
+			for (k=0;k<3;k++)
+				accel_sum[k]+=accels[i][j][k];
+		}
+		//compute the new velocity based on the acceleration and time interval
+		//compute the new position based on the velocity and time interval
+		for (k=0;k<3;k++){
+			hVel[i][k]+=accel_sum[k]*INTERVAL;
+			hPos[i][k]+=hVel[i][k]*INTERVAL;
+		}
+	}
+}
 
 //compute: Updates the positions and locations of the objects in the system based on gravity.
 //Parameters: None
 //Returns: None
 //Side Effect: Modifies the hPos and hVel arrays with the new positions and accelerations after 1 INTERVAL
-void compute() {
-	//each of our kernels will need different numbers of blocks and threads (thanks @prof silber!)
-	//as such we will define them below.
+void compute(){
+	int blockSize = 256;
+	int numBlocks = (NUMENTITIES - 1)/blockSize+1;
+	
+	vector3* values;
+	vector3** accels;
+	double* d_mass;
+	
+	//allocate memory
+	cudaMalloc((void**)&values,sizeof(vector3)*NUMENTITIES*NUMENTITIES);
+    cudaMalloc((void**)&accels,sizeof(vector3)*NUMENTITIES);
+	cudaMalloc((void**)&d_mass,sizeof(double));
+	cudaMalloc((void**)&d_hPos,sizeof(vector3)*NUMENTITIES);
+    cudaMalloc((void**)&d_hVel,sizeof(vector3)*NUMENTITIES);
 
-	//we need to figure out how many blocks we need to cover all NUMENTITIES bodies in our simulation
-	//for calculate accels:
+	//copy to the device
+	cudaMemcpy(d_hPos,hPos,sizeof(vector3)*NUMENTITIES,cudaMemcpyHostToDevice);
+    cudaMemcpy(d_hVel,hVel,sizeof(vector3)*NUMENTITIES,cudaMemcpyHostToDevice);
+    cudaMemcpy(d_mass,mass,sizeof(double),cudaMemcpyHostToDevice);
 
-	int computeAccelsBlockDim = (NUMENTITIES + 7) / 8;
-	dim3 computeAccelsTPB(8, 8, 3);
-	dim3 computeAccelsBlocks(computeAccelsBlockDim, computeAccelsBlockDim);
+	constructAccels<<<numBlocks, blockSize>>>(values, accels);
+	cudaDeviceSynchronize();
 
-	computeAccels<<<computeAccelsBlocks, computeAccelsTPB>>>(d_accels, d_hPos, d_mass);
+	computePairwiseAccels<<<numBlocks, blockSize>>>(accels, values, d_hPos, d_hVel, d_mass);
+	cudaDeviceSynchronize();
 
-	//for sumCols, we can use the max 1024 threads per block and one block per column:
+	computeSum<<<numBlocks, blockSize>>>(accels, d_hPos, d_hVel);
+	cudaDeviceSynchronize();
 
-	int sumColsTPB = 32;
-	dim3 sumColsBlocks(NUMENTITIES, 3);
-	int sumColsSharedMem = sumColsTPB * sizeof(double) * 2;
+	//copy results to host 
+	cudaMemcpy(hPos,d_hPos,sizeof(vector3)*NUMENTITIES,cudaMemcpyDeviceToHost);
+    cudaMemcpy(hVel,d_hVel,sizeof(vector3)*NUMENTITIES,cudaMemcpyDeviceToHost);
+    cudaMemcpy(mass,d_mass,sizeof(double),cudaMemcpyDeviceToHost);
 
-	sumCols<<<sumColsBlocks, sumColsTPB, sumColsSharedMem>>>(d_accels, d_accel_sum);
-
-	//for updatePos, we need to break up into chunks with an extra dimension of 3 (for x, y, z)
-	int updatePosBlockDim = (NUMENTITIES + 7) / 8;
-	dim3 updatePosTPB(8, 3);
-
-	updatePos<<<updatePosBlockDim, updatePosTPB>>>(d_accel_sum, d_hPos, d_hVel);
-
-	//originally had copy-back to host here but was causing lots of extra overhead when not needed
-	//now we request the data back in nbody.cu
-
-}
-
-//computeAccels: Calculates the acceleration of each object in the system
-//Parameters: d_hPos - the array of positions of the objects
-//            d_accels - the array of accelerations of the objects
-//            d_mass: the array of masses of the objects
-//Returns: None
-//Side Effect: Modifies the accels array with the new values
-__global__ void computeAccels(vector3** d_accels, vector3* d_hPos, double* d_mass){
-	//we need to get our thread information (indexes in x, y, z)
-	int i = threadIdx.x + blockIdx.x * blockDim.x;
-	int j = threadIdx.y + blockIdx.y * blockDim.y;
-	int k = threadIdx.z; //this represents our dimensions (x, y, z)
-	//if we are going to do each dimension (k) in its own thread, we are going to need a shared array for each block to store dist.
-	__shared__ vector3 shDistance[8][8];
-
-	//we need to check that i and j are not more than NUMENTITIES
-	if (i >= NUMENTITIES || j >= NUMENTITIES) return;
-
-	//if we are on the diagonal, there is no acceleration due to itself so set to all zeroes
-	if (i == j) {
-		d_accels[i][j][k] = 0;
-	} else {
-		//we need to calculate the distance between the objects
-		shDistance[threadIdx.x][threadIdx.y][k] = d_hPos[i][k] - d_hPos[j][k];
-
-		//we need to sync threads here or we may start calculating without being done >:(
-		__syncthreads();
-
-		//the following three lines are from silber's original serial code... (with minor modifications to support parallelization of 3d)
-		double magnitude_sq = shDistance[threadIdx.x][threadIdx.y][0] * shDistance[threadIdx.x][threadIdx.y][0] + shDistance[threadIdx.x][threadIdx.y][1] * shDistance[threadIdx.x][threadIdx.y][1] + shDistance[threadIdx.x][threadIdx.y][2] * shDistance[threadIdx.x][threadIdx.y][2];
-		double magnitude = sqrt(magnitude_sq);
-		double accelmag = -1 * GRAV_CONSTANT * d_mass[j] / magnitude_sq;
-
-		//fill the vector with the results (this is only partial because 1 thread does 1 dim)
-		d_accels[i][j][k] = accelmag * shDistance[threadIdx.x][threadIdx.y][k] / magnitude;
-	}
-}
-
-//sumCols: Sums the columns of the accels array and stores the result in accel_sum
-//Parameters: d_accels - the array of accelerations of the objects
-//            d_accel_sum - the array of accelerations of the objects
-//Returns: None
-//Side Effect: Modifies the accel_sum array with the new values
-__global__ void sumCols(vector3** d_accels, vector3* d_accel_sum){
-	//this code is based off of / derived from silber's serial code
-	//we need to get our information from the thread
-	int row = threadIdx.x;
-	int col = blockIdx.x; //we use block index here because we want to sum the columns with each column getting 1 block
-	int dim = blockIdx.y;
-	extern __shared__ double shArr[];
-	__shared__ int offset;
-	int blocksize = blockDim.x;
-	int arrSize = NUMENTITIES;
-	shArr[row] = row < arrSize ? d_accels[col][row][dim] : 0;
-	if (row == 0) {
-		offset = blocksize;
-	}
-	__syncthreads();
-	while (offset < arrSize) {
-		shArr[row+blocksize] = row+blocksize < arrSize ? d_accels[col][row+offset][dim] : 0;
-		__syncthreads();
-		if (row == 0) {
-			offset += blocksize;
-		}
-		double sum = shArr[2*row] + shArr[2*row+1];
-		__syncthreads();
-		shArr[row] = sum;
-	}
-	__syncthreads();
-	for (int stride = 1; stride < blocksize; stride *= 2) {
-		int arrIdx = row*stride*2;
-		if (arrIdx + stride < blocksize) {
-			shArr[arrIdx] += shArr[arrIdx + stride];
-		}
-		__syncthreads();
-	}
-	if (row == 0) {
-		d_accel_sum[col][dim] = shArr[0];
-	}
-}
-
-//updatePos: Updates the positions and velocities of the objects in the system based on accel_sum and position and velocity.
-//Parameters: hPos - the array of positions of the objects
-//            hVel - the array of velocities of the objects
-//            accel_sum - the array of accelerations of the objects
-//Returns: None
-//Side Effect: Modifies the hPos and hVel arrays with the new positions and accelerations after 1 INTERVAL
-__global__ void updatePos(vector3* accel_sum, vector3* hPos, vector3* hVel) {
-	//we will launch a thread for each index in accel_sum so no need for for loop here
-	//get our thread information
-	int i = threadIdx.x + blockIdx.x * blockDim.x;
-	int k = threadIdx.y;
-
-	//we need to check that the thread index is not greater than number of entities
-	if (i >= NUMENTITIES) return;
-
-	hVel[i][k] += accel_sum[i][k] * INTERVAL;
-	hPos[i][k] = hVel[i][k] * INTERVAL;
+    cudaFree(accels);
+    cudaFree(values);
+    cudaFree(d_mass);
+    cudaFree(d_hPos);
+    cudaFree(d_hVel);
 }
