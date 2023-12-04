@@ -60,42 +60,18 @@ __global__ void computeSum(vector3 **accels, vector3 *hPos, vector3 *hVel){
 //Returns: None
 //Side Effect: Modifies the hPos and hVel arrays with the new positions and accelerations after 1 INTERVAL
 void compute(){
-	int blockSize = 256;
-	int numBlocks = (NUMENTITIES - 1)/blockSize+1;
+	int block_size = 256;
+	int block_count = (NUMENTITIES - 1)/block_size+1;
 	
-	vector3* values;
-	vector3** accels;
-	double* d_mass;
+
+	constructAccels<<<block_count, block_size>>>(values, accels);
+	//cudaDeviceSynchronize();
+
+	computePairwiseAccels<<<block_count, block_size>>>(accels, values, d_hPos, d_hVel, d_mass);
+	//cudaDeviceSynchronize();
+
+	computeSum<<<block_count, block_size>>>(accels, d_hPos, d_hVel);
+	//cudaDeviceSynchronize();
+
 	
-	//allocate memory
-	cudaMalloc((void**)&values,sizeof(vector3)*NUMENTITIES*NUMENTITIES);
-    cudaMalloc((void**)&accels,sizeof(vector3)*NUMENTITIES);
-	cudaMalloc((void**)&d_mass,sizeof(double));
-	cudaMalloc((void**)&d_hPos,sizeof(vector3)*NUMENTITIES);
-    cudaMalloc((void**)&d_hVel,sizeof(vector3)*NUMENTITIES);
-
-	//copy to the device
-	cudaMemcpy(d_hPos,hPos,sizeof(vector3)*NUMENTITIES,cudaMemcpyHostToDevice);
-    cudaMemcpy(d_hVel,hVel,sizeof(vector3)*NUMENTITIES,cudaMemcpyHostToDevice);
-    cudaMemcpy(d_mass,mass,sizeof(double),cudaMemcpyHostToDevice);
-
-	constructAccels<<<numBlocks, blockSize>>>(values, accels);
-	cudaDeviceSynchronize();
-
-	computePairwiseAccels<<<numBlocks, blockSize>>>(accels, values, d_hPos, d_hVel, d_mass);
-	cudaDeviceSynchronize();
-
-	computeSum<<<numBlocks, blockSize>>>(accels, d_hPos, d_hVel);
-	cudaDeviceSynchronize();
-
-	//copy results to host 
-	cudaMemcpy(hPos,d_hPos,sizeof(vector3)*NUMENTITIES,cudaMemcpyDeviceToHost);
-    cudaMemcpy(hVel,d_hVel,sizeof(vector3)*NUMENTITIES,cudaMemcpyDeviceToHost);
-    cudaMemcpy(mass,d_mass,sizeof(double),cudaMemcpyDeviceToHost);
-
-    cudaFree(accels);
-    cudaFree(values);
-    cudaFree(d_mass);
-    cudaFree(d_hPos);
-    cudaFree(d_hVel);
 }

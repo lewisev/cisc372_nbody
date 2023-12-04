@@ -102,9 +102,43 @@ int main(int argc, char **argv)
 	#ifdef DEBUG
 	printSystem(stdout);
 	#endif
+
+
+
+	vector3* values;
+	vector3** accels;
+	double* d_mass;
+	
+	//allocate memory
+	cudaMalloc((void**)&values,sizeof(vector3)*NUMENTITIES*NUMENTITIES);
+    cudaMalloc((void**)&accels,sizeof(vector3)*NUMENTITIES);
+	cudaMalloc((void**)&d_mass,sizeof(double));
+	cudaMalloc((void**)&d_hPos,sizeof(vector3)*NUMENTITIES);
+    cudaMalloc((void**)&d_hVel,sizeof(vector3)*NUMENTITIES);
+
+	//copy to the device
+	cudaMemcpy(d_hPos,hPos,sizeof(vector3)*NUMENTITIES,cudaMemcpyHostToDevice);
+    cudaMemcpy(d_hVel,hVel,sizeof(vector3)*NUMENTITIES,cudaMemcpyHostToDevice);
+    cudaMemcpy(d_mass,mass,sizeof(double),cudaMemcpyHostToDevice);
+
+
 	for (t_now=0;t_now<DURATION;t_now+=INTERVAL){
 		compute();
 	}
+
+	//copy results to host 
+	cudaMemcpy(hPos,d_hPos,sizeof(vector3)*NUMENTITIES,cudaMemcpyDeviceToHost);
+    cudaMemcpy(hVel,d_hVel,sizeof(vector3)*NUMENTITIES,cudaMemcpyDeviceToHost);
+    cudaMemcpy(mass,d_mass,sizeof(double),cudaMemcpyDeviceToHost);
+
+    cudaFree(accels);
+    cudaFree(values);
+    cudaFree(d_mass);
+    cudaFree(d_hPos);
+    cudaFree(d_hVel);
+
+
+
 	clock_t t1=clock()-t0;
 #ifdef DEBUG
 	printSystem(stdout);
