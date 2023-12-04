@@ -13,7 +13,9 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass) {
 	//int i, j, k;
 
 	//first compute the pairwise accelerations.  Effect is on the first argument.
-
+	if(i >= NUMENTITIES || j >= NUMENTITIES) {
+		return;
+	}
 	if (i == j) {
 		FILL_VECTOR(accels[i][j], 0, 0, 0);
 	} else {
@@ -33,7 +35,7 @@ __global__ void compute_velocities(vector3 **accels, vector3 *hVel, vector3 *hPo
 	//int i = threadIdx.x + blockIdx.x * blockDim.x;
 	//int j = threadIdx.y + blockDim.x * gridDim.x; //how many operations to do each group
 	//int k = threadIdx.z;
-`	int i=blockIdx.x;
+	int i=blockIdx.x;
 	//sum up the rows of our matrix to get effect on each entity, then update velocity and position.
 	vector3 accel_sum = {0, 0, 0};
 	accel_sum[k] += accels[i][j][k]; //accel_sum local, accels is global
@@ -46,26 +48,21 @@ __global__ void compute_velocities(vector3 **accels, vector3 *hVel, vector3 *hPo
 //Parameters: None
 //Returns: None
 //Side Effect: Modifies the hPos and hVel arrays with the new positions and accelerations after 1 INTERVAL
-void compute() {
-
-	//todo: remove for loops, calculate sizes for each thing
+void compute() {	
 	
-	/* Probably can get rid of these
-	int num_blocks = 256;
-	int block_size = (NUMENTITIES - 1) / num_blocks + 1; */
 	dim3 square_block_dim (BLOCK_SIZE, BLOCK_SIZE, 3);
 	dim3 block_dim ((NUMENTITIES+15)/16, (NUMENTITIES+15)/16, 3);
 
 	compute_accels<<<square_block_dim, block_dim>>>(d_accels, d_hPos, d_mass);
-	cudaDeviceSynchronize(); //todo: Maybe not needed if result stays the same without?
 	
 	compute_velocities<<<NUMENTITIES, 1>>>(d_accels, d_hVel, d_hPos);
-	cudaDeviceSynchronize(); //todo: Maybe not needed if result stays the same without?
 	// done in nbody.cu
 	/* for (i=0; i < NUMENTITIES; i++) {
 		accels[i] =& values[i * NUMENTITIES];
 	} */
-	
+	//DO we need these???
+	//cudaMemcpy(hVel, d_vel, sizeof(vector3) * NUMENTITIES, cudaMemcpyDefault);
+	//cudaMemcpy(hPos, d_pos, sizeof(vector3) * NUMENTITIES, cudaMemcpyDefault);
 	//free(accels);
 	//free(values);
 }
