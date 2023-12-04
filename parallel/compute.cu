@@ -71,10 +71,9 @@ void compute() {
 	dim3 block_dim ((NUMENTITIES+15)/16, (NUMENTITIES+15)/16, 3);
 
 	compute_accels<<<square_block_dim, block_dim>>>(d_accels, d_hPos, d_mass);
-	printf("d_accels[0][0]");
 	
 	compute_velocities<<<NUMENTITIES, 1>>>(d_accels, d_hVel, d_hPos);
 	//DO we need these???
-	//cudaMemcpy(hVel, d_vel, sizeof(vector3) * NUMENTITIES, cudaMemcpyDefault);
-	//cudaMemcpy(hPos, d_pos, sizeof(vector3) * NUMENTITIES, cudaMemcpyDefault);
+	cudaMemcpy(hVel, d_vel, sizeof(vector3) * NUMENTITIES, cudaMemcpydeviceToHost);
+	cudaMemcpy(hPos, d_pos, sizeof(vector3) * NUMENTITIES, cudaMemcpydeviceToHost);
 }
