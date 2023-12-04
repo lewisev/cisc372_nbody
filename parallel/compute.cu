@@ -31,7 +31,7 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass) {
 	}
 }
 
-/* __global__ void compute_velocities(vector3 **accels, vector3 *hVel, vector3 *hPos) {
+__global__ void compute_velocities(vector3 **accels, vector3 *hVel, vector3 *hPos) {
 	//int i = threadIdx.x + blockIdx.x * blockDim.x;
 	//int j = threadIdx.y + blockDim.x * gridDim.x; //how many operations to do each group
 	//int k = threadIdx.z;
@@ -43,23 +43,6 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass) {
 	//compute the new position based on the velocity and time interval
 	hVel[i][k] += accel_sum[k] * INTERVAL;
 	hPos[i][k] += hVel[i][k] * INTERVAL;
-} */
-__global__ void sum(vector3 *accels, vector3 *accel_sum, vector3 *dPos, vector3 *dVel) {
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
-    if (i < NUMENTITIES) {
-        FILL_VECTOR(accel_sum[i], 0, 0, 0);
-        for (int j = 0; j < NUMENTITIES; j++) {
-            for (int k = 0; k < 3; k++) {
-                accel_sum[i][k] += accels[(i * NUMENTITIES) + j][k];
-            }
-        }
-        // Compute the new velocity based on the acceleration and time interval
-        // Compute the new position based on the velocity and time interval
-        for (int k = 0; k < 3; k++) {
-            dVel[i][k] += accel_sum[i][k] * INTERVAL;
-            dPos[i][k] += dVel[i][k] * INTERVAL; 
-        }
-    }
 }
 //compute: Updates the positions and locations of the objects in the system nbased on gravity.
 //Parameters: None
@@ -72,15 +55,9 @@ void compute() {
 
 	compute_accels<<<square_block_dim, block_dim>>>(d_accels, d_hPos, d_mass);
 	
-	//compute_velocities<<<NUMENTITIES, 1>>>(d_accels, d_hVel, d_hPos);
-	sum<<<(NUMENTITIES+255)/256, 256>>>(d_accels, d_accel_sum, d_hPos, d_hVel);
-	// done in nbody.cu
-	/* for (i=0; i < NUMENTITIES; i++) {
-		accels[i] =& values[i * NUMENTITIES];
-	} */
+	compute_velocities<<<NUMENTITIES, 1024, 2048>>>(d_accels, d_hVel, d_hPos);
+
 	//DO we need these???
 	//cudaMemcpy(hVel, d_vel, sizeof(vector3) * NUMENTITIES, cudaMemcpyDefault);
 	//cudaMemcpy(hPos, d_pos, sizeof(vector3) * NUMENTITIES, cudaMemcpyDefault);
-	//free(accels);
-	//free(values);
 }
