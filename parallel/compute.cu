@@ -31,7 +31,7 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass) {
 	}
 }
 
-__global__ void compute_velocities(vector3 **accels, vector3 *hVel, vector3 *hPos) {
+/* __global__ void compute_velocities(vector3 **accels, vector3 *hVel, vector3 *hPos) {
 	//int i = threadIdx.x + blockIdx.x * blockDim.x;
 	//int j = threadIdx.y + blockDim.x * gridDim.x; //how many operations to do each group
 	//int k = threadIdx.z;
@@ -43,7 +43,7 @@ __global__ void compute_velocities(vector3 **accels, vector3 *hVel, vector3 *hPo
 	//compute the new position based on the velocity and time interval
 	hVel[i][k] += accel_sum[k] * INTERVAL;
 	hPos[i][k] += hVel[i][k] * INTERVAL;
-}
+} */
 __global__ void sum(vector3 *accels, vector3 *accel_sum, vector3 *dPos, vector3 *dVel) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < NUMENTITIES) {
