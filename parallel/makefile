@@ -1,4 +1,4 @@
-FLAGS= -DDEBUG
+FLAGS= -DDEBUG -g
 LIBS= -lm
 ALWAYS_REBUILD=makefile
 
@@ -10,7 +10,3 @@ compute.o: compute.cu config.h vector.h $(ALWAYS_REBUILD)
 	nvcc $(FLAGS) -c $< 
 clean:
 	rm -f *.o nbody 
-run: nbody
-	srun ./nbody
-save: nbody
-	srun ./nbody > out.txt

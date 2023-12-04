@@ -10,29 +10,14 @@
 // represents the objects in the system.  Global variables
 vector3 *hVel, *d_hVel;
 vector3 *hPos, *d_hPos;
+vector3 **d_accels, *d_accel_sum;
+vector3* temp[NUMENTITIES];
 double *mass, *d_mass;
-
-vector3 **accels, *values;
-vector3 **d_accels, *d_values;
-
-//handle error macro
-static void HandleError( cudaError_t err,
-                         const char *file,
-                         int line ) {
-    if (err != cudaSuccess) {
-        printf( "%s in %s at line %d\n", cudaGetErrorString( err ),
-                file, line );
-        exit( EXIT_FAILURE );
-    }
-}
-#define HANDLE_ERROR( err ) (HandleError( err, __FILE__, __LINE__ ))
-
 
 //initHostMemory: Create storage for numObjects entities in our system
 //Parameters: numObjects: number of objects to allocate
 //Returns: None
 //Side Effects: Allocates memory in the hVel, hPos, and mass global variables
-//! does not change for parallelizing
 void initHostMemory(int numObjects)
 {
 	hVel = (vector3 *)malloc(sizeof(vector3) * numObjects);
@@ -40,11 +25,57 @@ void initHostMemory(int numObjects)
 	mass = (double *)malloc(sizeof(double) * numObjects);
 }
 
+//initDeviceMemory: Create storage for numObjects entities in our system on the GPU
+//Parameters: numObjects: number of objects to allocate
+//Returns: None
+//Side Effects: Allocates memory in the for the device variables on the GPU
+
+//I was going to do this in a function, but it causes errors on Darwin (and only on darwin?)
+/*
+void initDeviceMemory() {
+	cudaMalloc((void**)&d_accels, NUMENTITIES * sizeof(vector3*));
+
+	//2d arrays are funky in cuda, here's a workaround
+	for (int i = 0; i < NUMENTITIES; i++) {
+		cudaMalloc(&temp[i], sizeof(vector3) * NUMENTITIES);
+	}
+	cudaMemcpy(d_accels, temp, NUMENTITIES * sizeof(vector3*), cudaMemcpyHostToDevice);
+
+	cudaMalloc((void**)&d_hPos, NUMENTITIES*sizeof(vector3));
+
+	cudaMalloc((void**)&d_hVel, NUMENTITIES*sizeof(vector3));
+
+	cudaMalloc((void**)&d_accel_sum, NUMENTITIES*sizeof(vector3));
+
+	cudaMalloc((void**)&d_mass, NUMENTITIES*sizeof(double));
+}
+*/
+
+//freeDeviceMemory: Free storage allocated by a previous call to initDeviceMemory
+//Parameters: None
+//Returns: None
+//Side Effects: Frees the memory allocated to device global variables
+void freeDeviceMemory() {
+	for (int i = 0; i < NUMENTITIES; i++) {
+		cudaFree(temp[i]);
+	}
+
+	cudaFree(d_accels);
+
+	cudaFree(d_hPos);
+
+	cudaFree(d_hVel);
+
+	cudaFree(d_accel_sum);
+	
+	cudaFree(d_mass);
+}
+
+
 //freeHostMemory: Free storage allocated by a previous call to initHostMemory
 //Parameters: None
 //Returns: None
 //Side Effects: Frees the memory allocated to global variables hVel, hPos, and mass.
-//! does not change for parallelizing
 void freeHostMemory()
 {
 	free(hVel);
@@ -57,7 +88,6 @@ void freeHostMemory()
 //Parameters: None
 //Returns: None
 //Fills the first 8 entries of our system with an estimation of the sun plus our 8 planets.
-//! does not change for parallelizing
 void planetFill(){
 	int i,j;
 	double data[][7]={SUN,MERCURY,VENUS,EARTH,MARS,JUPITER,SATURN,URANUS,NEPTUNE};
@@ -75,10 +105,9 @@ void planetFill(){
 //				count: The number of random objects to put into our system
 //Returns: None
 //Side Effects: Fills count entries in our system starting at index start (0 based)
-//! does not change for parallelizing
 void randomFill(int start, int count)
 {
-	int i, j = start;
+	int i, j= start;
 	for (i = start; i < start + count; i++)
 	{
 		for (j = 0; j < 3; j++)
@@ -94,7 +123,6 @@ void randomFill(int start, int count)
 //Parameters: 	handle: A handle to an open file with write access to prnt the data to
 //Returns: 		none
 //Side Effects: Modifies the file handle by writing to it.
-//! does not change for parallelizing
 void printSystem(FILE* handle){
 	int i,j;
 	for (i=0;i<NUMENTITIES;i++){
@@ -106,9 +134,7 @@ void printSystem(FILE* handle){
 		for (j=0;j<3;j++){
 			fprintf(handle,"%lf,",hVel[i][j]);
 		}
-		//fprintf(handle,"),m=%lf\n",mass[i]); //todo: uncomment this line to show mass
-
-		printf("\n");
+		fprintf(handle,"),m=%lf\n",mass[i]);
 	}
 }
 
@@ -119,59 +145,44 @@ int main(int argc, char **argv)
 	//srand(time(NULL));
 	srand(1234);
 	initHostMemory(NUMENTITIES);
+
+	//The cuda malloc statements are here instead of the function because darwin breaks if its in a function :))))))))))
+
+	cudaMalloc((void**)&d_accels, NUMENTITIES * sizeof(vector3*));
+
+	//2d arrays are funky in cuda, here's a workaround
+	for (int i = 0; i < NUMENTITIES; i++) {
+		cudaMalloc(&temp[i], sizeof(vector3) * NUMENTITIES);
+	}
+	cudaMemcpy(d_accels, temp, NUMENTITIES * sizeof(vector3*), cudaMemcpyHostToDevice);
+
+	cudaMalloc((void**)&d_hPos, NUMENTITIES*sizeof(vector3));
+
+	cudaMalloc((void**)&d_hVel, NUMENTITIES*sizeof(vector3));
+
+	cudaMalloc((void**)&d_accel_sum, NUMENTITIES*sizeof(vector3));
+
+	cudaMalloc((void**)&d_mass, NUMENTITIES*sizeof(double));
+
 	planetFill();
 	randomFill(NUMPLANETS + 1, NUMASTEROIDS);
 	//now we have a system.
 	#ifdef DEBUG
-	//printSystem(stdout);
+	printSystem(stdout);
 	#endif
 
-	// Allocate memory
-	HANDLE_ERROR(cudaMalloc((void**) &d_hVel, sizeof(vector3) * NUMENTITIES));
-	HANDLE_ERROR(cudaMalloc((void**) &d_hPos, sizeof(vector3) * NUMENTITIES));
-	HANDLE_ERROR(cudaMalloc((void**) &d_mass, sizeof(double) * NUMENTITIES));
+	//we need to send the system to the GPU
+	cudaMemcpy(d_hPos, hPos, NUMENTITIES*sizeof(vector3), cudaMemcpyHostToDevice);
+	cudaMemcpy(d_hVel, hVel, NUMENTITIES*sizeof(vector3), cudaMemcpyHostToDevice);
+	cudaMemcpy(d_mass, mass, NUMENTITIES*sizeof(double), cudaMemcpyHostToDevice);
 
-	// create values and accels
-	///Changed these to cudaMalloc on host,dont need them done everytime in compute loop
-	values = (vector3*) malloc(sizeof(vector3) * NUMENTITIES*NUMENTITIES);
-	accels = (vector3**) malloc(sizeof(vector3*) * NUMENTITIES);
-
-	//make an acceleration matrix which is NUMENTITIES squared in size;
-	for (int i=0; i < NUMENTITIES; i++) {
-		accels[i] =& values[i * NUMENTITIES];
-	}
-
-	HANDLE_ERROR(cudaMalloc((void**) &d_values, sizeof(vector3) * NUMENTITIES*NUMENTITIES));
-	HANDLE_ERROR(cudaMalloc((void**) &d_accels, sizeof(vector3) * NUMENTITIES));
-
-	// Copy variables from host to device
-	HANDLE_ERROR(cudaMemcpy(d_hVel, hVel, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice));
-	HANDLE_ERROR(cudaMemcpy(d_hPos, hPos, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice));
-	HANDLE_ERROR(cudaMemcpy(d_mass, mass, sizeof(double) * NUMENTITIES, cudaMemcpyHostToDevice));
-
-	HANDLE_ERROR(cudaMemcpy(d_values, values, sizeof(vector3) * NUMENTITIES*NUMENTITIES, cudaMemcpyHostToDevice));
-	HANDLE_ERROR(cudaMemcpy(d_accels, accels, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice));
-
-	//* Call compute
-	for (t_now=0;t_now<DURATION;t_now+=INTERVAL) {
+	for (t_now=0;t_now<DURATION;t_now+=INTERVAL){
 		compute();
 	}
 
-	//printSystem(stdout);
+	cudaMemcpy(hPos, d_hPos, NUMENTITIES*sizeof(vector3), cudaMemcpyDeviceToHost);
 
-	// Copy variables from device to host
-	HANDLE_ERROR(cudaMemcpy(hVel, d_hVel, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost));
-	HANDLE_ERROR(cudaMemcpy(hPos, d_hPos, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost));
-
-	//free all cuda memory
-	HANDLE_ERROR(cudaFree(d_hVel));
-	HANDLE_ERROR(cudaFree(d_hPos));
-	HANDLE_ERROR(cudaFree(d_mass));
-	HANDLE_ERROR(cudaFree(d_values));
-	HANDLE_ERROR(cudaFree(d_accels));
-
-	free(values);
-	free(accels);
+	cudaMemcpy(hVel, d_hVel, NUMENTITIES*sizeof(vector3), cudaMemcpyDeviceToHost);
 
 	clock_t t1=clock()-t0;
 #ifdef DEBUG
@@ -180,4 +191,5 @@ int main(int argc, char **argv)
 	printf("This took a total time of %f seconds\n",(double)t1/CLOCKS_PER_SEC);
 
 	freeHostMemory();
+	freeDeviceMemory();
 }
