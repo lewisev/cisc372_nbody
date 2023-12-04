@@ -8,7 +8,7 @@
 
 
 __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass) {
-	printf("hjello\n");
+	//printf("hjello\n");
 	int i = threadIdx.x + blockIdx.x * blockDim.x;
 	int j = threadIdx.y + blockIdx.y * blockDim.y;
 	int k = threadIdx.z;
