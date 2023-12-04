@@ -21,6 +21,7 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass) {
 		return;
 	}
 	if (i == j) {
+		printf("i == j\n");
 		FILL_VECTOR(accels[i][j], 0, 0, 0);
 	} else {
 		printf("Before calcs\n");
