@@ -8,6 +8,7 @@
 
 
 __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass) {
+	printf("hjello\n");
 	int i = threadIdx.x + blockIdx.x * blockDim.x;
 	int j = threadIdx.y + blockIdx.y * blockDim.y;
 	int k = threadIdx.z;
@@ -68,11 +69,13 @@ __global__ void compute_velocities(vector3 **accels, vector3 *hVel, vector3 *hPo
 //Side Effect: Modifies the hPos and hVel arrays with the new positions and accelerations after 1 INTERVAL
 void compute() {	
 	
-	dim3 square_block_dim (BLOCK_SIZE, BLOCK_SIZE, 3);
-	dim3 block_dim ((NUMENTITIES+15)/16, (NUMENTITIES+15)/16, 3);
-	printf("Before kernal call\n");
-	compute_accels<<square_block_dim, block_dim>>(d_accels, d_hPos, d_mass);
-	printf("After kernal call\n");
+	
+	dim3 block_count ((NUMENTITIES+15)/16, (NUMENTITIES+15)/16, 3);
+	dim3 block_size (BLOCK_SIZE, BLOCK_SIZE, 3);
+	
+	//printf("Before kernal call\n");
+	compute_accels<<<block_count, block_size>>>(d_accels, d_hPos, d_mass);
+	//printf("After kernal call\n");
 	compute_velocities<<<NUMENTITIES, 1>>>(d_accels, d_hVel, d_hPos);
 	//DO we need these???
 	cudaMemcpy(hVel, d_hVel, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
