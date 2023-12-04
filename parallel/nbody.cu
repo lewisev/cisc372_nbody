@@ -12,6 +12,7 @@ vector3 *hVel, *d_hVel;
 vector3 *hPos, *d_hPos;
 double *mass, *d_mass;
 
+vector3 **accels, *values;
 vector3 **d_accels, *d_values;
 
 //handle error macro
@@ -132,8 +133,8 @@ int main(int argc, char **argv)
 
 	// create values and accels
 	///Changed these to cudaMalloc on host,dont need them done everytime in compute loop
-	vector3* values = (vector3*) malloc(sizeof(vector3) * NUMENTITIES*NUMENTITIES);
-	vector3** accels = (vector3**) malloc(sizeof(vector3*) * NUMENTITIES);
+	values = (vector3*) malloc(sizeof(vector3) * NUMENTITIES*NUMENTITIES);
+	accels = (vector3**) malloc(sizeof(vector3*) * NUMENTITIES);
 
 	//make an acceleration matrix which is NUMENTITIES squared in size;
 	for (int i=0; i < NUMENTITIES; i++) {
