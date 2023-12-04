@@ -74,6 +74,6 @@ void compute() {
 	
 	compute_velocities<<<NUMENTITIES, 1>>>(d_accels, d_hVel, d_hPos);
 	//DO we need these???
-	cudaMemcpy(hVel, d_vel, sizeof(vector3) * NUMENTITIES, cudaMemcpydeviceToHost);
-	cudaMemcpy(hPos, d_pos, sizeof(vector3) * NUMENTITIES, cudaMemcpydeviceToHost);
+	cudaMemcpy(hVel, d_Vel, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
+	cudaMemcpy(hPos, d_Pos, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
 }
