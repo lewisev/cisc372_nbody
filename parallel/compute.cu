@@ -44,6 +44,23 @@ __global__ void compute_velocities(vector3 **accels, vector3 *hVel, vector3 *hPo
 	hVel[i][k] += accel_sum[k] * INTERVAL;
 	hPos[i][k] += hVel[i][k] * INTERVAL;
 }
+__global__ void sum(vector3 *accels, vector3 *accel_sum, vector3 *dPos, vector3 *dVel) {
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < NUMENTITIES) {
+        FILL_VECTOR(accel_sum[i], 0, 0, 0);
+        for (int j = 0; j < NUMENTITIES; j++) {
+            for (int k = 0; k < 3; k++) {
+                accel_sum[i][k] += accels[(i * NUMENTITIES) + j][k];
+            }
+        }
+        // Compute the new velocity based on the acceleration and time interval
+        // Compute the new position based on the velocity and time interval
+        for (int k = 0; k < 3; k++) {
+            dVel[i][k] += accel_sum[i][k] * INTERVAL;
+            dPos[i][k] += dVel[i][k] * INTERVAL; 
+        }
+    }
+}
 //compute: Updates the positions and locations of the objects in the system nbased on gravity.
 //Parameters: None
 //Returns: None
@@ -55,7 +72,8 @@ void compute() {
 
 	compute_accels<<<square_block_dim, block_dim>>>(d_accels, d_hPos, d_mass);
 	
-	compute_velocities<<<NUMENTITIES, 1>>>(d_accels, d_hVel, d_hPos);
+	//compute_velocities<<<NUMENTITIES, 1>>>(d_accels, d_hVel, d_hPos);
+	sum<<<(NUMENTITIES+255)/256, 256>>>(d_accels, d_accel_sum, d_hPos, d_hVel);
 	// done in nbody.cu
 	/* for (i=0; i < NUMENTITIES; i++) {
 		accels[i] =& values[i * NUMENTITIES];
