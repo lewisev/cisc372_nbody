@@ -78,6 +78,6 @@ void compute() {
 	//printf("After kernal call\n");
 	compute_velocities<<<NUMENTITIES, 1>>>(d_accels, d_hVel, d_hPos);
 	//DO we need these???
-	//cudaMemcpy(hVel, d_hVel, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
-	//cudaMemcpy(hPos, d_hPos, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
+	cudaMemcpy(hVel, d_hVel, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
+	cudaMemcpy(hPos, d_hPos, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
 }
