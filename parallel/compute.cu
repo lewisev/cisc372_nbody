@@ -12,7 +12,7 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass) {
 	int j = threadIdx.y + blockIdx.y * blockDim.y;
 	int k = threadIdx.z;
 	//int i, j, k;
-
+	printf("i: %d, j: %d, k: %d\n", i, j, k);
 	//first compute the pairwise accelerations.  Effect is on the first argument.
 	if(i >= NUMENTITIES || j >= NUMENTITIES) {
 		return;
