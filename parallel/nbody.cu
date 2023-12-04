@@ -7,7 +7,9 @@
 #include "planets.h"
 #include "compute.h"
 
-// represents the objects in the system.  Global variables
+//Global vectors to represent the bodies in the system
+//(as in n bodies)
+//(n-body reference)
 vector3 *hVel, *d_hVel;
 vector3 *hPos, *d_hPos;
 double *mass;
@@ -89,6 +91,7 @@ void printSystem(FILE* handle){
 	}
 }
 
+
 int main(int argc, char **argv)
 {
 	clock_t t0=clock();
@@ -100,7 +103,7 @@ int main(int argc, char **argv)
 	randomFill(NUMPLANETS + 1, NUMASTEROIDS);
 	//now we have a system.
 	#ifdef DEBUG
-	//printSystem(stdout);
+	printSystem(stdout);
 	#endif
 	for (t_now=0;t_now<DURATION;t_now+=INTERVAL){
 		compute();
