@@ -16,6 +16,7 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass) {
 	//printf("i: %d, j: %d, k: %d\n", i, j, k);
 	//first compute the pairwise accelerations.  Effect is on the first argument.
 	if(i >= NUMENTITIES || j >= NUMENTITIES) {
+		printf("Ending early\n");
 		return;
 	}
 	if (i == j) {
