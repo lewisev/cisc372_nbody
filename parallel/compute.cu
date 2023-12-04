@@ -30,7 +30,7 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass) {
 		double magnitude = sqrt(magnitude_sq);
 		double accelmag = -1 * GRAV_CONSTANT * mass[j] / magnitude_sq;
 		FILL_VECTOR(accels[i][j], accelmag*distance[0]/magnitude, accelmag*distance[1]/magnitude, accelmag*distance[2]/magnitude);
-		//printf("%f\n", accels[i][j][k]);
+		printf("%f\n", accels[i][j][k]);
 	}
 }
 
