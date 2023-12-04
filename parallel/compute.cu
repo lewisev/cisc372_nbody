@@ -31,6 +31,7 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass) {
 	}
 }
 
+/*
 __global__ void compute_velocities(vector3 **accels, vector3 *hVel, vector3 *hPos) {
 	//int i = threadIdx.x + blockIdx.x * blockDim.x;
 	//int j = threadIdx.y + blockDim.x * gridDim.x; //how many operations to do each group
@@ -44,6 +45,7 @@ __global__ void compute_velocities(vector3 **accels, vector3 *hVel, vector3 *hPo
 	hVel[i][k] += accel_sum[k] * INTERVAL;
 	hPos[i][k] += hVel[i][k] * INTERVAL;
 }
+*/
 //compute: Updates the positions and locations of the objects in the system nbased on gravity.
 //Parameters: None
 //Returns: None
@@ -55,8 +57,21 @@ void compute() {
 
 	compute_accels<<<square_block_dim, block_dim>>>(d_accels, d_hPos, d_mass);
 	
-	compute_velocities<<<NUMENTITIES, 1024, 2048>>>(d_accels, d_hVel, d_hPos);
-
+	//compute_velocities<<<NUMENTITIES, 1024, 2048>>>(d_accels, d_hVel, d_hPos);
+	for (i=0; i < NUMENTITIES; i++){
+		vector3 accel_sum = {0, 0, 0};
+		for (j=0; j < NUMENTITIES; j++) {
+			for (k=0; k < 3; k++) {
+				accel_sum[k] += accels[i][j][k];
+			}
+		}
+		//compute the new velocity based on the acceleration and time interval
+		//compute the new position based on the velocity and time interval
+		for (k=0; k < 3; k++) {
+			hVel[i][k] += accel_sum[k] * INTERVAL;
+			hPos[i][k] += hVel[i][k] * INTERVAL;
+		}
+	}
 	//DO we need these???
 	//cudaMemcpy(hVel, d_vel, sizeof(vector3) * NUMENTITIES, cudaMemcpyDefault);
 	//cudaMemcpy(hPos, d_pos, sizeof(vector3) * NUMENTITIES, cudaMemcpyDefault);
