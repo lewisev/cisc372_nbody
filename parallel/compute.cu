@@ -2,6 +2,7 @@
 #include <math.h>
 #include "vector.h"
 #include "config.h"
+#include <stdio.h>
 
 //todo: possibly move Idx/Dim vars to compute function so not defined in each device function??
 
