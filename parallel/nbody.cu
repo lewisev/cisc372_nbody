@@ -113,9 +113,9 @@ int main(int argc, char **argv)
 	#endif
 
 	// Allocate memory
-	cudaMalloc((void**) &d_hVel, sizeof(vector3) * NUMENTITIES);
-	cudaMalloc((void**) &d_hPos, sizeof(vector3) * NUMENTITIES);
-	cudaMalloc((void**) &d_mass, sizeof(double) * NUMENTITIES);
+	HANDLE_ERROR(cudaMalloc((void**) &d_hVel, sizeof(vector3) * NUMENTITIES));
+	HANDLE_ERROR(cudaMalloc((void**) &d_hPos, sizeof(vector3) * NUMENTITIES));
+	HANDLE_ERROR(cudaMalloc((void**) &d_mass, sizeof(double) * NUMENTITIES));
 
 	// create values and accels
 	///Changed these to cudaMalloc on host,dont need them done everytime in compute loop
@@ -127,16 +127,16 @@ int main(int argc, char **argv)
 		accels[i] =& values[i * NUMENTITIES];
 	}
 
-	cudaMalloc((void**) &d_values, sizeof(vector3) * NUMENTITIES);
-	cudaMalloc((void**) &d_accels, sizeof(vector3) * NUMENTITIES * NUMENTITIES);
+	HANDLE_ERROR(cudaMalloc((void**) &d_values, sizeof(vector3) * NUMENTITIES*NUMENTITIES));
+	HANDLE_ERROR(cudaMalloc((void**) &d_accels, sizeof(vector3) * NUMENTITIES));
 
 	// Copy variables from host to device
-	cudaMemcpy(d_hVel, hVel, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_hPos, hPos, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_mass, mass, sizeof(double) * NUMENTITIES, cudaMemcpyHostToDevice);
+	HANDLE_ERROR(cudaMemcpy(d_hVel, hVel, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice));
+	HANDLE_ERROR(cudaMemcpy(d_hPos, hPos, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice));
+	HANDLE_ERROR(cudaMemcpy(d_mass, mass, sizeof(double) * NUMENTITIES, cudaMemcpyHostToDevice));
 
-	cudaMemcpy(d_values, values, sizeof(vector3) * NUMENTITIES*NUMENTITIES, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_accels, accels, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice);
+	HANDLE_ERROR(cudaMemcpy(d_values, values, sizeof(vector3) * NUMENTITIES*NUMENTITIES, cudaMemcpyHostToDevice));
+	HANDLE_ERROR(cudaMemcpy(d_accels, accels, sizeof(vector3) * NUMENTITIES, cudaMemcpyHostToDevice));
 
 	//* Call compute
 	for (t_now=0;t_now<DURATION;t_now+=INTERVAL) {
@@ -144,15 +144,15 @@ int main(int argc, char **argv)
 	}
 
 	// Copy variables from device to host
-	cudaMemcpy(hVel, d_hVel, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
-	cudaMemcpy(hPos, d_hPos, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
+	HANDLE_ERROR(cudaMemcpy(hVel, d_hVel, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost));
+	HANDLE_ERROR(cudaMemcpy(hPos, d_hPos, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost));
 
 	//free all cuda memory
-	cudaFree(d_hVel);
-	cudaFree(d_hPos);
-	cudaFree(d_mass);
-	cudaFree(d_values);
-	cudaFree(d_accels);
+	HANDLE_ERROR(cudaFree(d_hVel));
+	HANDLE_ERROR(cudaFree(d_hPos));
+	HANDLE_ERROR(cudaFree(d_mass));
+	HANDLE_ERROR(cudaFree(d_values));
+	HANDLE_ERROR(cudaFree(d_accels));
 
 	free(values);
 	free(accels);

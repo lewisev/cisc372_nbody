@@ -74,10 +74,10 @@ void compute() {
 	dim3 block_size (BLOCK_SIZE, BLOCK_SIZE, 3);
 	
 	//printf("Before kernal call\n");
-	compute_accels<<<block_count, block_size>>>(accels, hPos, mass);
+	compute_accels<<<block_count, block_size>>>(d_accels, d_hPos, d_mass);
 	//printf("After kernal call\n");
-	compute_velocities<<<NUMENTITIES, 1>>>(accels, hVel, hPos);
+	compute_velocities<<<NUMENTITIES, 1>>>(d_accels, d_hVel, d_hPos);
 	//DO we need these???
-	cudaMemcpy(hVel, d_hVel, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
-	cudaMemcpy(hPos, d_hPos, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
+	//cudaMemcpy(hVel, d_hVel, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
+	//cudaMemcpy(hPos, d_hPos, sizeof(vector3) * NUMENTITIES, cudaMemcpyDeviceToHost);
 }
