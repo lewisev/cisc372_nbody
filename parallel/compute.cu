@@ -19,14 +19,17 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass){
 
 	//printf("i: %d, j: %d\n", i, j);
 
-	if(i > NUMENTITIES && j > NUMENTITIES) {
-		return;
-	}
+	//if(i > NUMENTITIES && j > NUMENTITIES) {
+	//	return;
+	//	printf("return early")
+	//}
 
 	if (i == j) {
+		printf("i==j - ");
 		FILL_VECTOR(accels[i][j], 0, 0, 0);
 		printf("fill vector (i==j): i: %d, j: %d\n", i, j);
 	} else {
+		printf("else - ");
 		vector3 distance;
 		for (int k = 0; k < 3; k++) {
 			distance[k] = hPos[i][k] - hPos[j][k];
