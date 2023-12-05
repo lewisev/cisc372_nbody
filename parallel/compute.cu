@@ -44,7 +44,7 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass){
 __global__ void compute_velocities(vector3 **accels, vector3 *hPos, vector3 *hVel){
 
 	int i = threadIdx.x + blockIdx.x * blockDim.x;
-	int j = threadIdx.y + blockDim.x * gridDim.x; //how many operations to do each group
+	int j = threadIdx.y + blockDim.y * gridDim.y; //how many operations to do each group
 	int k = threadIdx.z;
 
 	//sum up the rows of our matrix to get effect on each entity, then update velocity and position.
