@@ -4,7 +4,6 @@
 #include "config.h"
 #include "compute.h"
 
-/
 //make an acceleration matrix which is NUMENTITIES squared in size;
 __global__ void constructAccels(vector3* values, vector3** accels){
         int in = threadIdx.x;
