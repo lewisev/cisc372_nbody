@@ -24,6 +24,9 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass){
 		return;
 	}
 
+	//todo: put fill accels here? - if so, need values as a function argument
+	//accels[i] = &values[i * NUMENTITIES];
+
 	//printf("i: %d, j: %d\n", i, j);
 	//printf("accels[%d]: %p\n", i, (void*) accels[i]);
 	
@@ -69,7 +72,7 @@ void compute(){
 	dim3 block_count((NUMENTITIES+15) / block_size.x, (NUMENTITIES+15) / block_size.y);
 	
 
-	fill_accels<<<1, NUMENTITIES>>>(values, accels);
+	fill_accels<<<block_count, block_size>>>(values, accels);
 	//cudaDeviceSynchronize();
 
 	compute_accels<<<block_count, block_size>>>(accels, d_hPos, d_mass);
