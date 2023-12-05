@@ -12,7 +12,6 @@ vector3 *hVel, *d_hVel;
 vector3 *hPos, *d_hPos;
 double *mass;
 
-
 vector3* values;
 vector3** accels;
 double* d_mass;
@@ -135,7 +134,6 @@ int main(int argc, char **argv)
     cudaFree(d_mass);
     cudaFree(d_hPos);
     cudaFree(d_hVel);
-
 
 
 	clock_t t1=clock()-t0;

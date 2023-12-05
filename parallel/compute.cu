@@ -63,7 +63,6 @@ void compute(){
 	int block_size = 256;
 	int block_count = (NUMENTITIES - 1)/block_size+1;
 	
-
 	constructAccels<<<block_count, block_size>>>(values, accels);
 	//cudaDeviceSynchronize();
 
