@@ -47,7 +47,8 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass){
 }
 
 __global__ void compute_velocities(vector3 **accels, vector3 *hPos, vector3 *hVel){
-	int i = blockIdx.x;
+	//int i = blockIdx.x;
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	int k = threadIdx.x;
 
 	if(i >= NUMENTITIES) {
@@ -79,6 +80,6 @@ void compute(){
 	compute_accels<<<block_count, block_size>>>(accels, d_hPos, d_mass);
 	//cudaDeviceSynchronize();
 
-	compute_velocities<<<NUMENTITIES, 3>>>(accels, d_hPos, d_hVel);
+	compute_velocities<<<block_count, 3>>>(accels, d_hPos, d_hVel);
 	//cudaDeviceSynchronize();
 }
