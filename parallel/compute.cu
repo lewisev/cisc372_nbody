@@ -69,11 +69,11 @@ void compute(){
 	
 
 	fill_accels<<<1, NUMENTITIES>>>(values, accels);
-	cudaDeviceSynchronize();
+	//cudaDeviceSynchronize();
 
 	compute_accels<<<block_count, block_size>>>(accels, d_hPos, d_mass);
-	cudaDeviceSynchronize();
+	//cudaDeviceSynchronize();
 
 	compute_velocities<<<NUMENTITIES, 3>>>(accels, d_hPos, d_hVel);
-	cudaDeviceSynchronize();
+	//cudaDeviceSynchronize();
 }
