@@ -12,8 +12,8 @@ vector3 *hVel, *d_hVel;
 vector3 *hPos, *d_hPos;
 double *mass;
 
-vector3* values;
-vector3** accels;
+vector3* values, d_values;
+vector3** accels, d_accels;
 double* d_mass;
 //initHostMemory: Create storage for numObjects entities in our system
 //Parameters: numObjects: number of objects to allocate
@@ -119,6 +119,10 @@ int main(int argc, char **argv)
 	cudaMemcpy(d_hPos,hPos,sizeof(vector3)*NUMENTITIES,cudaMemcpyHostToDevice);
     cudaMemcpy(d_hVel,hVel,sizeof(vector3)*NUMENTITIES,cudaMemcpyHostToDevice);
     cudaMemcpy(d_mass,mass,sizeof(double),cudaMemcpyHostToDevice);
+
+	cudaMemcpy(d_values,values,sizeof(vector3)*NUMENTITIES*NUMENTITIES,cudaMemcpyHostToDevice);
+	cudaMemcpy(d_accels,accels,sizeof(vector3)*NUMENTITIES,cudaMemcpyHostToDevice);
+	
 
 
 	for (t_now=0;t_now<DURATION;t_now+=INTERVAL){
