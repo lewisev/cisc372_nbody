@@ -10,7 +10,7 @@ __global__ void fill_accels(vector3 *values, vector3 **accels){
 
 	if (i < NUMENTITIES) {
 		accels[i] = &values[i * NUMENTITIES];
-		printf("fill accels: %d, %d\n", i, &values[i * NUMENTITIES]);
+		printf("fill accels: %d, %p\n", i,(void*) &values[i * NUMENTITIES]);
 	}
 }
 
@@ -26,7 +26,7 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass){
 	//}
 
 	if (i == j) {
-		printf("try fill (i==j): i: %d, j: %d | accels[%d] = %d\n", i, j, i, accels[i]);
+		printf("try fill (i==j): i: %d, j: %d | accels[%d] = %p\n", i, j, i, (void*) accels[i]);
 		FILL_VECTOR(accels[i][j], 0, 0, 0);
 		printf("fill vector (i==j): i: %d, j: %d\n", i, j);
 	} else {
