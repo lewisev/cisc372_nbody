@@ -11,7 +11,6 @@ __global__ void fill_accels(vector3 *values, vector3 **accels){
 	if (i < NUMENTITIES) {
 		accels[i] = &values[i * NUMENTITIES];
 		//printf("fill accels: %d, %p\n", i,(void*) &values[i * NUMENTITIES]);
-	//	printf("*fill accels: %d, %d\n", i, accels[i][0]);
 	}
 }
 
@@ -21,22 +20,15 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass){
 
 
 	if(i >= NUMENTITIES || j >= NUMENTITIES) {
-		//printf("return early: %d", i);
 		return;
 	}
 
-
 	//printf("i: %d, j: %d\n", i, j);
-
 	//printf("accels[%d]: %p\n", i, (void*) accels[i]);
 	
 	if (i == j) {
-		//printf("try fill (i==j): i: %d, j: %d\n", i, j);
-		//printf("try fill (i==j): i: %d, j: %d | accels[%d] = %p\n", i, j, i, (void*) accels[i]);
 		FILL_VECTOR(accels[i][j], 0, 0, 0);
-		//printf("fill vector (i==j): i: %d, j: %d\n", i, j);
 	} else {
-	//	printf("else - ");
 		vector3 distance;
 		for (int k = 0; k < 3; k++) {
 			distance[k] = hPos[i][k] - hPos[j][k];
@@ -45,9 +37,7 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass){
 		double magnitude_sq = distance[0] * distance[0] + distance[1] * distance[1] + distance[2] * distance[2];
 		double magnitude = sqrt(magnitude_sq);
 		double accelmag = -1 * GRAV_CONSTANT * mass[j] / magnitude_sq;
-		//printf("before fill in else\n");
 		FILL_VECTOR(accels[i][j], accelmag * distance[0] / magnitude, accelmag * distance[1] / magnitude, accelmag * distance[2] / magnitude);
-		//printf("fill vector (else): i: %d, j: %d, magnitude_sq: %d\n", i, j, magnitude_sq);
 	}
 }
 
@@ -69,9 +59,6 @@ __global__ void compute_velocities(vector3 **accels, vector3 *hPos, vector3 *hVe
 // Returns: None
 // Side Effect: Modifies the hPos and hVel arrays with the new positions and accelerations after 1 INTERVAL
 void compute(){
-	// dim3 block_size (16, 16,);
-	//int block_size = 256;
-	//int block_count = (NUMENTITIES - 1) / block_size + 1;
 
 	dim3 block_size(16,16);
 	dim3 block_count((NUMENTITIES+15) / block_size.x, (NUMENTITIES+15) / block_size.y);
