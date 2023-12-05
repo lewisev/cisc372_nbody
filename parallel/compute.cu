@@ -59,7 +59,7 @@ void compute(){
 	//int block_count = (NUMENTITIES - 1) / block_size + 1;
 
 	dim3 block_size(16,16);
-	dim3 block_count((NUMENTITIES+15) / blocksize.x, (NUMENTITIES+15) / blocksize.y);
+	dim3 block_count((NUMENTITIES+15) / block_size.x, (NUMENTITIES+15) / block_size.y);
 
 	fill_accels<<<block_count, block_size>>>(values, accels);
 
