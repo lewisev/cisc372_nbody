@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <math.h>
+#include <stdio.h>
 #include "vector.h"
 #include "config.h"
 #include "compute.h"
