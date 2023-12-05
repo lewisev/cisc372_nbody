@@ -71,7 +71,7 @@ void compute(){
 	dim3 block_count((NUMENTITIES+15) / block_size.x, (NUMENTITIES+15) / block_size.y);
 	
 
-	fill_accels<<<block_count, block_size>>>(values, accels);
+	fill_accels<<<1, NUMENTITIES>>>(values, accels);
 	cudaDeviceSynchronize();
 
 	compute_accels<<<block_count, block_size>>>(accels, d_hPos, d_mass);
