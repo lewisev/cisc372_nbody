@@ -4,7 +4,7 @@
 #include "config.h"
 #include "compute.h"
 
-/*
+/
 //make an acceleration matrix which is NUMENTITIES squared in size;
 __global__ void constructAccels(vector3* values, vector3** accels){
         int in = threadIdx.x;
@@ -12,7 +12,7 @@ __global__ void constructAccels(vector3* values, vector3** accels){
             accels[in]=&values[in*NUMENTITIES];
         }
 }
-*/
+
 
 //first compute the pairwise accelerations.  Effect is on the first argument.
 __global__ void computePairwiseAccels(vector3 **accels, vector3 *values, vector3 *hPos, vector3 *hvel, double *mass){
@@ -63,14 +63,12 @@ __global__ void computeSum(vector3 **accels, vector3 *hPos, vector3 *hVel){
 //Returns: None
 //Side Effect: Modifies the hPos and hVel arrays with the new positions and accelerations after 1 INTERVAL
 void compute(){
-	int block_size = 256;
+	dim3 block_size (16, 16, 3);
 	int block_count = (NUMENTITIES - 1)/block_size+1;
 	
-	//constructAccels<<<block_count, block_size>>>(values, accels);
+	constructAccels<<<block_count, block_size>>>(values, accels);
 	//cudaDeviceSynchronize();
-	for (int i=0; i < NUMENTITIES; i++) {
-		accels[i] =& values[i * NUMENTITIES];
-	}
+
 	computePairwiseAccels<<<block_count, block_size>>>(accels, values, d_hPos, d_hVel, d_mass);
 	//cudaDeviceSynchronize();
 
