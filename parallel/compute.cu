@@ -10,7 +10,7 @@ __global__ void fill_accels(vector3 *values, vector3 **accels){
 
 	if (i < NUMENTITIES) {
 		accels[i] = &values[i * NUMENTITIES];
-		printf("fill accels: %d\n", i);
+		printf("fill accels: %d\n, %d", i, &values[i * NUMENTITIES]);
 	}
 }
 
@@ -39,7 +39,7 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass){
 		double magnitude_sq = distance[0] * distance[0] + distance[1] * distance[1] + distance[2] * distance[2];
 		double magnitude = sqrt(magnitude_sq);
 		double accelmag = -1 * GRAV_CONSTANT * mass[j] / magnitude_sq;
-		printf("before fill in else\n");
+		//printf("before fill in else\n");
 		FILL_VECTOR(accels[i][j], accelmag * distance[0] / magnitude, accelmag * distance[1] / magnitude, accelmag * distance[2] / magnitude);
 		printf("fill vector (else): i: %d, j: %d, magnitude_sq: %d\n", i, j, magnitude_sq);
 	}
