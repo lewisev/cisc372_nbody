@@ -17,7 +17,6 @@ __global__ void fill_accels(vector3 *values, vector3 **accels){
 __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass){
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	int j = blockIdx.y * blockDim.y + threadIdx.y;
-	int k = threadIdx.z;
 
 
 	if(i >= NUMENTITIES || j >= NUMENTITIES) {
@@ -31,9 +30,9 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass){
 		FILL_VECTOR(accels[i][j], 0, 0, 0);
 	} else {
 		vector3 distance;
-
-		distance[k] = hPos[i][k] - hPos[j][k];
-		__syncthreads(); // sync to make sure all distances have been calculated
+		for (int k = 0; k < 3; k++) {
+			distance[k] = hPos[i][k] - hPos[j][k];
+		}
 
 		double magnitude_sq = distance[0] * distance[0] + distance[1] * distance[1] + distance[2] * distance[2];
 		double magnitude = sqrt(magnitude_sq);
@@ -43,20 +42,24 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass){
 }
 
 __global__ void compute_velocities(vector3 **accels, vector3 *hPos, vector3 *hVel){
-	int i = blockIdx.x;
-	int k = threadIdx.x;
+	int i = threadIdx.x + blockIdx.x * blockDim.x;
+	int j = threadIdx.y + blockDim.x * gridDim.x; //how many operations to do each group
+	int k;
 
-	if(i >= NUMENTITIES) {
+	if(i >= NUMENTITIES || j >= NUMENTITIES) {
 		return;
 	}
 
-	double accel_sum = 0;
-	for (int j=0; j < NUMENTITIES; j++){
-		accel_sum += accels[i][j][k];
+	//sum up the rows of our matrix to get effect on each entity, then update velocity and position.
+	vector3 accel_sum = {0, 0, 0};
+	for (int k = 0; k < 3; k++) {
+		accel_sum[k] += accels[i][j][k]; //accel_sum local, accels is global
+	
+		//compute the new velocity based on the acceleration and time interval
+		//compute the new position based on the velocity and time interval
+		hVel[i][k] += accel_sum[k] * INTERVAL;
+		hPos[i][k] += hVel[i][k] * INTERVAL;
 	}
-
-	hVel[i][k] += accel_sum * INTERVAL;
-	hPos[i][k] += hVel[i][k] * INTERVAL;
 }
 
 // compute: Updates the positions and locations of the objects in the system based on gravity.
@@ -65,7 +68,7 @@ __global__ void compute_velocities(vector3 **accels, vector3 *hPos, vector3 *hVe
 // Side Effect: Modifies the hPos and hVel arrays with the new positions and accelerations after 1 INTERVAL
 void compute(){
 
-	dim3 block_size(16,16,3);
+	dim3 block_size(16,16);
 	dim3 block_count((NUMENTITIES+15) / block_size.x, (NUMENTITIES+15) / block_size.y);
 	
 
