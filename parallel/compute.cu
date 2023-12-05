@@ -21,14 +21,14 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass){
 
 
 	if(i >= NUMENTITIES || j >= NUMENTITIES) {
-		printf("return early: %d", i);
+		//printf("return early: %d", i);
 		return;
 	}
 
 
-	printf("i: %d, j: %d\n", i, j);
+	//printf("i: %d, j: %d\n", i, j);
 
-	printf("accels[%d]: %p\n", i, (void*) accels[i]);
+	//printf("accels[%d]: %p\n", i, (void*) accels[i]);
 	
 	if (i == j) {
 		//printf("try fill (i==j): i: %d, j: %d\n", i, j);
@@ -47,7 +47,7 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass){
 		double accelmag = -1 * GRAV_CONSTANT * mass[j] / magnitude_sq;
 		//printf("before fill in else\n");
 		FILL_VECTOR(accels[i][j], accelmag * distance[0] / magnitude, accelmag * distance[1] / magnitude, accelmag * distance[2] / magnitude);
-		printf("fill vector (else): i: %d, j: %d, magnitude_sq: %d\n", i, j, magnitude_sq);
+		//printf("fill vector (else): i: %d, j: %d, magnitude_sq: %d\n", i, j, magnitude_sq);
 	}
 }
 
