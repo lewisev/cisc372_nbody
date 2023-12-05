@@ -113,7 +113,7 @@ int main(int argc, char **argv)
 	cudaMalloc((void**)&d_mass,sizeof(double));
 	cudaMalloc((void**)&d_hPos,sizeof(vector3)*NUMENTITIES);
     cudaMalloc((void**)&d_hVel,sizeof(vector3)*NUMENTITIES);
-
+	
 	//copy to the device
 	cudaMemcpy(d_hPos,hPos,sizeof(vector3)*NUMENTITIES,cudaMemcpyHostToDevice);
     cudaMemcpy(d_hVel,hVel,sizeof(vector3)*NUMENTITIES,cudaMemcpyHostToDevice);
@@ -129,6 +129,7 @@ int main(int argc, char **argv)
     cudaMemcpy(hVel,d_hVel,sizeof(vector3)*NUMENTITIES,cudaMemcpyDeviceToHost);
     cudaMemcpy(mass,d_mass,sizeof(double),cudaMemcpyDeviceToHost);
 
+	//free cuda memory
     cudaFree(accels);
     cudaFree(values);
     cudaFree(d_mass);
