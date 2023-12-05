@@ -45,6 +45,10 @@ __global__ void compute_velocities(vector3 **accels, vector3 *hPos, vector3 *hVe
 	int i = blockIdx.x;
 	int k = threadIdx.x;
 
+	if(i >= NUMENTITIES) {
+		return;
+	}
+
 	double accel_sum = 0;
 	for (int j=0; j < NUMENTITIES; j++){
 		accel_sum += accels[i][j][k];
