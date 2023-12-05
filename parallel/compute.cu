@@ -71,12 +71,12 @@ void compute(){
 	dim3 block_count((NUMENTITIES+15) / block_size.x, (NUMENTITIES+15) / block_size.y);
 	
 
-	fill_accels<<<block_count, block_size>>>(d_values, d_accels);
+	fill_accels<<<block_count, block_size>>>(values, accels);
 	cudaDeviceSynchronize();
 
-	compute_accels<<<block_count, block_size>>>(d_accels, d_hPos, d_mass);
+	compute_accels<<<block_count, block_size>>>(accels, d_hPos, d_mass);
 	cudaDeviceSynchronize();
 
-	compute_velocities<<<NUMENTITIES, 3>>>(d_accels, d_hPos, d_hVel);
+	compute_velocities<<<NUMENTITIES, 3>>>(accels, d_hPos, d_hVel);
 	cudaDeviceSynchronize();
 }
