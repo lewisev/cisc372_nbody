@@ -17,6 +17,7 @@ __global__ void fill_accels(vector3 *values, vector3 **accels){
 __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass){
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	int j = blockIdx.y * blockDim.y + threadIdx.y;
+	int k = threadIdx.z;
 
 
 	if(i >= NUMENTITIES || j >= NUMENTITIES) {
@@ -30,9 +31,9 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass){
 		FILL_VECTOR(accels[i][j], 0, 0, 0);
 	} else {
 		vector3 distance;
-		for (int k = 0; k < 3; k++) {
-			distance[k] = hPos[i][k] - hPos[j][k];
-		}
+
+		distance[k] = hPos[i][k] - hPos[j][k];
+		__syncthreads(); // sync to make sure all distances have been calculated
 
 		double magnitude_sq = distance[0] * distance[0] + distance[1] * distance[1] + distance[2] * distance[2];
 		double magnitude = sqrt(magnitude_sq);
@@ -64,7 +65,7 @@ __global__ void compute_velocities(vector3 **accels, vector3 *hPos, vector3 *hVe
 // Side Effect: Modifies the hPos and hVel arrays with the new positions and accelerations after 1 INTERVAL
 void compute(){
 
-	dim3 block_size(16,16);
+	dim3 block_size(16,16,3);
 	dim3 block_count((NUMENTITIES+15) / block_size.x, (NUMENTITIES+15) / block_size.y);
 	
 
