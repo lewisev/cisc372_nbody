@@ -62,8 +62,8 @@ __global__ void computeSum(vector3 **accels, vector3 *hPos, vector3 *hVel){
 //Returns: None
 //Side Effect: Modifies the hPos and hVel arrays with the new positions and accelerations after 1 INTERVAL
 void compute(){
-	dim3 block_size (16, 16, 3);
-	int block_count = (NUMENTITIES - 1)/block_size+1;
+	dim3 block_size (16, 16);
+	int block_count = (NUMENTITIES - 1)/256+1;
 	
 	constructAccels<<<block_count, block_size>>>(values, accels);
 	//cudaDeviceSynchronize();
