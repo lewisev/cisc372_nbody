@@ -41,21 +41,22 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass){
 	}
 }
 
-__global__ void compute_velocities(vector3 **accels, vector3 *hPos, vector3 *hVel){
-	int i = blockIdx.x;
-	int k = threadIdx.x;
+__global__ void compute_velocities(vector3 *accels, vector3 *accel_sum, vector3 *hPos, vector3 *hVel){
+	int row = blockIdx.x * blockDim.x + threadIdx.x;
+	int i = row;
+	if (i < NUMENTITIES){
+		FILL_VECTOR(accel_sum[i], 0, 0, 0);
+		for (int j = 0; j < NUMENTITIES; j++){
+			for (int k = 0; k < 3; k++){
+				accel_sum[i][k] += accels[(i * NUMENTITIES) + j][k];
+			}
+		}
+		for (int k = 0; k < 3; k++){
+			hVel[i][k] += accel_sum[i][k] * INTERVAL;
+			hPos[i][k] = hVel[i][k] * INTERVAL;
+		}
 
-	if(i >= NUMENTITIES) {
-		return;
 	}
-
-	double accel_sum = 0;
-	for (int j=0; j < NUMENTITIES; j++){
-		accel_sum += accels[i][j][k];
-	}
-
-	hVel[i][k] += accel_sum * INTERVAL;
-	hPos[i][k] += hVel[i][k] * INTERVAL;
 }
 
 // compute: Updates the positions and locations of the objects in the system based on gravity.
