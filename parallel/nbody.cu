@@ -107,7 +107,9 @@ int main(int argc, char **argv)
 	#ifdef DEBUG
 	printSystem(stdout);
 	#endif
-
+	vector3 h_accel_sum = {0, 0, 0};
+	vector3* d_accel_sum;
+	cudaMalloc((void **)&d_accel_sum, sizeof(vector3));
 	
 	//allocate memory
 	cudaMalloc((void**)&d_hPos,sizeof(vector3)*NUMENTITIES);
