@@ -19,7 +19,7 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass){
 
 	//printf("i: %d, j: %d\n", i, j);
 
-	if(i < NUMENTITIES && j < NUMENTITIES) {
+	if(i > NUMENTITIES && j > NUMENTITIES) {
 		return;
 	}
 
