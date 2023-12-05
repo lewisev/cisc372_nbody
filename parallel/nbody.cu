@@ -12,9 +12,9 @@ vector3 *hVel, *d_hVel;
 vector3 *hPos, *d_hPos;
 double *mass;
 
-vector3* values, d_values;
-vector3** accels, d_accels;
-double* d_mass;
+vector3 *values, *d_values;
+vector3 **accels, **d_accels;
+double *d_mass;
 //initHostMemory: Create storage for numObjects entities in our system
 //Parameters: numObjects: number of objects to allocate
 //Returns: None
