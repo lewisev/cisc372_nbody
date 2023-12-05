@@ -18,7 +18,7 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, vector3 *hvel, d
 	int block = blockIdx.x * blockDim.x + threadIdx.x;
 	int stride = blockDim.x * gridDim.x;
 
-	for (i = block; i < NUMENTITIES; i += stride) {
+	for (int i = block; i < NUMENTITIES; i += stride) {
 		for (int j = 0; j < NUMENTITIES; j++) {
 			if (i == j) {
 				FILL_VECTOR(accels[i][j], 0, 0, 0);
@@ -43,7 +43,7 @@ __global__ void compute_velocities(vector3 **accels, vector3 *hPos, vector3 *hVe
 	int block = blockIdx.x * blockDim.x + threadIdx.x;
 	int stride = blockDim.x * gridDim.x;
 
-	for (i = block; i < NUMENTITIES; i += stride){
+	for (int i = block; i < NUMENTITIES; i += stride){
 		vector3 accel_sum = {0, 0, 0};
 		for (int j = 0; j < NUMENTITIES; j++) {
 			for (int k = 0; k < 3; k++) {
