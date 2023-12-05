@@ -17,7 +17,7 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass){
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	int j = blockIdx.y * blockDim.y + threadIdx.y;
 
-	printf("i: %d, j: %d\n", i, j);
+	//printf("i: %d, j: %d\n", i, j);
 
 	if(i < NUMENTITIES && j < NUMENTITIES) {
 		return;
@@ -25,8 +25,8 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass){
 
 	if (i == j) {
 		FILL_VECTOR(accels[i][j], 0, 0, 0);
+		printf("fill vector (i==j): i: %d, j: %d\n", i, j);
 	} else {
-
 		vector3 distance;
 		for (int k = 0; k < 3; k++) {
 			distance[k] = hPos[i][k] - hPos[j][k];
@@ -36,6 +36,7 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass){
 		double magnitude = sqrt(magnitude_sq);
 		double accelmag = -1 * GRAV_CONSTANT * mass[j] / magnitude_sq;
 		FILL_VECTOR(accels[i][j], accelmag * distance[0] / magnitude, accelmag * distance[1] / magnitude, accelmag * distance[2] / magnitude);
+		printf("fill vector (else): i: %d, j: %d, magnitude_sq: %d\n", i, j, magnitude_sq);
 	}
 }
 
