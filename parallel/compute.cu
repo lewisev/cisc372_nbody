@@ -12,6 +12,9 @@ __global__ void fill_accels(vector3 *values, vector3 **accels){
 		accels[i] = &values[i * NUMENTITIES];
 		printf("fill accels: %d\n", i);
 	}
+
+	FILL_VECTOR(accels[i][0], 0, 0, 0);
+	printf("try fill?");
 }
 
 __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass){
