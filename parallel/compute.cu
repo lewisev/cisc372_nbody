@@ -9,6 +9,7 @@ __global__ void fill_accels(vector3 *values, vector3 **accels){
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	//int i = threadIdx.x;
 
+	printf("i=%d\n ", i)
 	if (i < NUMENTITIES) {
 		accels[i] = &values[i * NUMENTITIES];
 		printf("fill accels: %d, %p\n", i,(void*) &values[i * NUMENTITIES]);
