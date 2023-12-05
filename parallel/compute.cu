@@ -6,7 +6,8 @@
 #include "compute.h"
 
 __global__ void fill_accels(vector3 *values, vector3 **accels){
-	int i = threadIdx.x;
+	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	//int i = threadIdx.x;
 
 	if (i < NUMENTITIES) {
 		accels[i] = &values[i * NUMENTITIES];
