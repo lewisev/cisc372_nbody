@@ -15,10 +15,10 @@ __global__ void fill_accels(vector3 *values, vector3 **accels){
 
 // first compute the pairwise accelerations.  Effect is on the first argument.
 __global__ void compute_accels(vector3 **accels, vector3 *hPos, vector3 *hvel, double *mass){
-	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	int block = blockIdx.x * blockDim.x + threadIdx.x;
 	int stride = blockDim.x * gridDim.x;
 
-	for (i; i < NUMENTITIES; i += stride) {
+	for (i = block; i < NUMENTITIES; i += stride) {
 		for (int j = 0; j < NUMENTITIES; j++) {
 			if (i == j) {
 				FILL_VECTOR(accels[i][j], 0, 0, 0);
@@ -40,10 +40,10 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, vector3 *hvel, d
 
 // sum up the rows of our matrix to get effect on each entity, then update velocity and position.
 __global__ void compute_velocities(vector3 **accels, vector3 *hPos, vector3 *hVel){
-	int i = blockIdx.x * blockDim.x + threadIdx.x;
+	int block = blockIdx.x * blockDim.x + threadIdx.x;
 	int stride = blockDim.x * gridDim.x;
 
-	for (i; i < NUMENTITIES; i += stride){
+	for (i = block; i < NUMENTITIES; i += stride){
 		vector3 accel_sum = {0, 0, 0};
 		for (int j = 0; j < NUMENTITIES; j++) {
 			for (int k = 0; k < 3; k++) {
@@ -53,7 +53,7 @@ __global__ void compute_velocities(vector3 **accels, vector3 *hPos, vector3 *hVe
 
 		// compute the new velocity based on the acceleration and time interval
 		// compute the new position based on the velocity and time interval
-		for (k = 0; k < 3; k++) {
+		for (int k = 0; k < 3; k++) {
 			hVel[i][k] += accel_sum[k] * INTERVAL;
 			hPos[i][k] += hVel[i][k] * INTERVAL;
 		}
@@ -72,7 +72,7 @@ void compute(){
 	fill_accels<<<block_count, block_size>>>(values, accels);
 	// cudaDeviceSynchronize();
 
-	compute_accels<<<block_count, block_size>>>(accels, values, d_hPos, d_hVel, d_mass);
+	compute_accels<<<block_count, block_size>>>(accels, d_hPos, d_hVel, d_mass);
 	// cudaDeviceSynchronize();
 
 	compute_velocities<<<block_count, block_size>>>(accels, d_hPos, d_hVel);
