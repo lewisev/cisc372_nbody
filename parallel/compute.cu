@@ -28,12 +28,12 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass){
 	//}
 
 	if (i == j) {
-		printf("try fill (i==j): i: %d, j: %d\n", i, j);
+		//printf("try fill (i==j): i: %d, j: %d\n", i, j);
 		//printf("try fill (i==j): i: %d, j: %d | accels[%d] = %p\n", i, j, i, (void*) accels[i]);
 		FILL_VECTOR(accels[i][j], 0, 0, 0);
-		printf("fill vector (i==j): i: %d, j: %d\n", i, j);
+		//printf("fill vector (i==j): i: %d, j: %d\n", i, j);
 	} else {
-		printf("else - ");
+	//	printf("else - ");
 		vector3 distance;
 		for (int k = 0; k < 3; k++) {
 			distance[k] = hPos[i][k] - hPos[j][k];
