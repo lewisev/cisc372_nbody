@@ -108,11 +108,12 @@ int main(int argc, char **argv)
 
 	
 	//allocate memory
-	cudaMalloc((void**)&values,sizeof(vector3)*NUMENTITIES*NUMENTITIES);
-    cudaMalloc((void**)&accels,sizeof(vector3)*NUMENTITIES);
-	cudaMalloc((void**)&d_mass,sizeof(double));
 	cudaMalloc((void**)&d_hPos,sizeof(vector3)*NUMENTITIES);
     cudaMalloc((void**)&d_hVel,sizeof(vector3)*NUMENTITIES);
+	cudaMalloc((void**)&d_mass,sizeof(double));
+
+	cudaMalloc((void**)&values,sizeof(vector3)*NUMENTITIES*NUMENTITIES);
+    cudaMalloc((void**)&accels,sizeof(vector3)*NUMENTITIES);
 	
 	//copy to the device
 	cudaMemcpy(d_hPos,hPos,sizeof(vector3)*NUMENTITIES,cudaMemcpyHostToDevice);
@@ -130,11 +131,12 @@ int main(int argc, char **argv)
     cudaMemcpy(mass,d_mass,sizeof(double),cudaMemcpyDeviceToHost);
 
 	//free cuda memory
-    cudaFree(accels);
-    cudaFree(values);
-    cudaFree(d_mass);
     cudaFree(d_hPos);
     cudaFree(d_hVel);
+	cudaFree(d_mass);
+	    
+    cudaFree(values);
+	cudaFree(accels);
 
 
 	clock_t t1=clock()-t0;

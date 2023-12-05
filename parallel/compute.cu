@@ -4,7 +4,6 @@
 #include "config.h"
 #include "compute.h"
 
-// make an acceleration matrix which is NUMENTITIES squared in size;
 __global__ void fill_accels(vector3 *values, vector3 **accels){
 	int i = threadIdx.x;
 
@@ -13,7 +12,6 @@ __global__ void fill_accels(vector3 *values, vector3 **accels){
 	}
 }
 
-// first compute the pairwise accelerations.  Effect is on the first argument.
 __global__ void compute_accels(vector3 **accels, vector3 *hPos, vector3 *hvel, double *mass){
 	int block = blockIdx.x * blockDim.x + threadIdx.x;
 	int stride = blockDim.x * gridDim.x;
@@ -38,7 +36,6 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, vector3 *hvel, d
 	}
 }
 
-// sum up the rows of our matrix to get effect on each entity, then update velocity and position.
 __global__ void compute_velocities(vector3 **accels, vector3 *hPos, vector3 *hVel){
 	int block = blockIdx.x * blockDim.x + threadIdx.x;
 	int stride = blockDim.x * gridDim.x;
@@ -70,11 +67,8 @@ void compute(){
 	int block_count = (NUMENTITIES - 1) / block_size + 1;
 
 	fill_accels<<<block_count, block_size>>>(values, accels);
-	// cudaDeviceSynchronize();
 
 	compute_accels<<<block_count, block_size>>>(accels, d_hPos, d_hVel, d_mass);
-	// cudaDeviceSynchronize();
 
 	compute_velocities<<<block_count, block_size>>>(accels, d_hPos, d_hVel);
-	// cudaDeviceSynchronize();
 }
