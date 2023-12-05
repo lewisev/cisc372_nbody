@@ -10,6 +10,7 @@ __global__ void fill_accels(vector3 *values, vector3 **accels){
 
 	if (i < NUMENTITIES) {
 		accels[i] = &values[i * NUMENTITIES];
+		printf("fill accels: %d\n", i);
 	}
 }
 
@@ -71,6 +72,8 @@ void compute(){
 
 	fill_accels<<<NUMENTITIES, 1>>>(values, accels);
 	cudaDeviceSynchronize();
+
+	printf("---\n");
 	
 
 	compute_accels<<<block_count, block_size>>>(accels, d_hPos, d_mass);
