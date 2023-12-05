@@ -19,14 +19,17 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass){
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	int j = blockIdx.y * blockDim.y + threadIdx.y;
 
+
+	if(i >= NUMENTITIES || j >= NUMENTITIES) {
+		printf("return early: %d", i);
+		return;
+	}
+
+
 	printf("i: %d, j: %d\n", i, j);
 
 	printf("accels[%d]: %p\n", i, (void*) accels[i]);
-	//if(i > NUMENTITIES && j > NUMENTITIES) {
-	//	return;
-	//	printf("return early")
-	//}
-
+	
 	if (i == j) {
 		//printf("try fill (i==j): i: %d, j: %d\n", i, j);
 		//printf("try fill (i==j): i: %d, j: %d | accels[%d] = %p\n", i, j, i, (void*) accels[i]);
