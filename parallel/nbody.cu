@@ -12,7 +12,7 @@ vector3 *hVel, *d_hVel;
 vector3 *hPos, *d_hPos;
 double *mass;
 
-vector3* values;
+// vector3* values;
 vector3** accels;
 double* d_mass;
 //initHostMemory: Create storage for numObjects entities in our system
@@ -112,15 +112,28 @@ int main(int argc, char **argv)
 	//allocate memory
 	cudaMalloc((void**)&d_hPos,sizeof(vector3)*NUMENTITIES);
     cudaMalloc((void**)&d_hVel,sizeof(vector3)*NUMENTITIES);
-	cudaMalloc((void**)&d_mass,sizeof(double));
+	cudaMalloc((void**)&d_mass,sizeof(double)*NUMENTITIES);
 
-	cudaMalloc((void**)&values,sizeof(vector3)*NUMENTITIES*NUMENTITIES);
-    cudaMalloc((void**)&accels,sizeof(vector3)*NUMENTITIES);
+	//cudaMalloc((void**)&values,sizeof(vector3)*NUMENTITIES*NUMENTITIES);
+    //cudaMalloc((void**)&accels,sizeof(vector3)*NUMENTITIES);
+
+	// Here we allocate space on the GPU for an array of vector pointers
+	cudaMalloc(&accels, sizeof(vector3*) * NUMENTITIES);
+	// Here we declare an array of vector pointers that lives on the host (not GPU!)
+	// We will put GPU pointers in this array, then memcpy those addresses to the device accels above!
+	vector3* host_accels[NUMENTITIES];
+	for (int i = 0; i < NUMENTITIES; i++) {
+		// Put GPU pointer into host accels
+		cudaMalloc(&host_accels[i], sizeof(vector3*) * NUMENTITIES);
+	}
+	// Move the addresses we've stored in the host array into the device array
+	cudaMemcpy(accels, host_accels, sizeof(vector3*) * NUMENTITIES, cudaMemcpyHostToDevice);
+
 	
 	//copy to the device
 	cudaMemcpy(d_hPos,hPos,sizeof(vector3)*NUMENTITIES,cudaMemcpyHostToDevice);
     cudaMemcpy(d_hVel,hVel,sizeof(vector3)*NUMENTITIES,cudaMemcpyHostToDevice);
-    cudaMemcpy(d_mass,mass,sizeof(double),cudaMemcpyHostToDevice);
+    cudaMemcpy(d_mass,mass,sizeof(double)*NUMENTITIES,cudaMemcpyHostToDevice);
 
 
 	for (t_now=0;t_now<DURATION;t_now+=INTERVAL){
@@ -130,15 +143,7 @@ int main(int argc, char **argv)
 	//copy results to host 
 	cudaMemcpy(hPos,d_hPos,sizeof(vector3)*NUMENTITIES,cudaMemcpyDeviceToHost);
     cudaMemcpy(hVel,d_hVel,sizeof(vector3)*NUMENTITIES,cudaMemcpyDeviceToHost);
-    cudaMemcpy(mass,d_mass,sizeof(double),cudaMemcpyDeviceToHost);
-
-	//free cuda memory
-    cudaFree(d_hPos);
-    cudaFree(d_hVel);
-	cudaFree(d_mass);
-	    
-    cudaFree(values);
-	cudaFree(accels);
+    //cudaMemcpy(mass,d_mass,sizeof(double),cudaMemcpyDeviceToHost);
 
 
 	clock_t t1=clock()-t0;
@@ -146,6 +151,17 @@ int main(int argc, char **argv)
 	printSystem(stdout);
 #endif
 	printf("This took a total time of %f seconds\n",(double)t1/CLOCKS_PER_SEC);
+
+	//free cuda memory
+    cudaFree(d_hPos);
+    cudaFree(d_hVel);
+	cudaFree(d_mass);
+	    
+    //cudaFree(values);
+	/**
+	* This doesn't free the rows of accels... it just frees their pointers
+	*/
+	cudaFree(accels);
 
 	freeHostMemory();
 }
