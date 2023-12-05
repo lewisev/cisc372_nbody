@@ -12,5 +12,3 @@ clean:
 	rm -f *.o nbody 
 run: nbody
 	srun ./nbody
-save: nbody
-	srun ./nbody > out.txt
