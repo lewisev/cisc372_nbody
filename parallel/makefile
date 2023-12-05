@@ -9,6 +9,8 @@ nbody.o: nbody.cu planets.h config.h vector.h $(ALWAYS_REBUILD)
 compute.o: compute.cu config.h vector.h $(ALWAYS_REBUILD)
 	nvcc $(FLAGS) -c $< 
 clean:
-	rm -f *.o nbody 
+	rm -f *.o nbody
 run: nbody
 	srun ./nbody
+out: nbody
+	srun ./nbody > out.txt
