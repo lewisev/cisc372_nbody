@@ -52,37 +52,80 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass){
 		//printf("row %d col %d distance %e %e %e\n", row, col, distance[0], distance[1], distance[2]);
 
 		double magnitude_sq = distance[0] * distance[0] + distance[1] * distance[1] + distance[2] * distance[2];
+		
 		double magnitude = sqrt(magnitude_sq);
 		double accelmag = -1 * GRAV_CONSTANT * mass[col] / magnitude_sq;
+		//printf("row %d col %d magnitude %f\n", row, col, magnitude);
 
+		//! good until here - magnitude & accelmag are very close
+		
+		
 		FILL_VECTOR(
 			accels[row][col], 
 			accelmag * distance[0] / magnitude, 
 			accelmag * distance[1] / magnitude, 
 			accelmag * distance[2] / magnitude
 		);
+		
 
-		//printf("row: %d col: %d value: %e, %e, %e\n", row, col, accels[row][col][0], accels[row][col][1], accels[row][col][2]);
+		/*
+		accels[row][col][0] = accelmag * distance[0] / magnitude;
+		accels[row][col][1] = accelmag * distance[1] / magnitude;
+		accels[row][col][2] = accelmag * distance[2] / magnitude;
+		*/
+		
+		/*
+		printf("row: %d col: %d value: %f, %f, %f\n", row, col, accelmag*distance[0]/magnitude,
+		 accelmag*distance[1]/magnitude, 
+		 accelmag*distance[2]/magnitude);
+		 */
+		//printf("row: %d col: %d value: %f, %f, %f\n", row, col, accels[row][col][0], accels[row][col][1], accels[row][col][2]);
 	}
 }
 
 __global__ void compute_velocities(vector3 **accels, vector3 *hPos, vector3 *hVel){
-	int row = blockIdx.x;
+	int row = blockIdx.x; // NUMENTITIES
 	//int k = threadIdx.x;
 
-	if (row == 0) {
-		for (int i = 0; i < NUMENTITIES; i++) {
-			for (int j = 0; j < NUMENTITIES; j++) {
-				//printf("row %d col %d {%e %e %e}\n", i, j, accels[i][j][0], accels[i][j][1], accels[i][j][2]);
-			}
+	int j, k;
+
+	//printf("row: %d\n", row);
+
+	if(row >= NUMENTITIES) {
+		return;
+	}
+
+	vector3 accel_sum = {0, 0, 0};
+	for (j=0; j < NUMENTITIES; j++) {
+		//printf("row: %d\tcol: %d\n", row, j);
+		for (k=0; k < 3; k++) {
+			accel_sum[k] += accels[row][j][k];
 		}
 	}
+	//compute the new velocity based on the acceleration and time interval
+	//compute the new position based on the velocity and time interval
+	for (k=0; k < 3; k++) {
+		hVel[row][k] += accel_sum[k] * INTERVAL;
+		hPos[row][k] += hVel[row][k] * INTERVAL;
+	}
+
+	/*
+
+	printf("row: %d\n", row);
+
+	if (row == 0) {
+		for (int j = 0; j < NUMENTITIES; j++) {
+			//printf("row %d col %d {%e %e %e}\n", i, j, accels[i][j][0], accels[i][j][1], accels[i][j][2]);
+		}
+	}
+	*/
 
 	/**
 	if(i >= NUMENTITIES) {
 		return;
 	}
 	*/
+	/*
 
 	vector3 accel_sum = {0, 0, 0};
 	for (int col=0; col < NUMENTITIES; col++){
@@ -95,6 +138,7 @@ __global__ void compute_velocities(vector3 **accels, vector3 *hPos, vector3 *hVe
 		hVel[row][k] += accel_sum[k] * INTERVAL;
 		hPos[row][k] += hVel[row][k] * INTERVAL;
 	}
+	*/
 }
 
 // compute: Updates the positions and locations of the objects in the system based on gravity.

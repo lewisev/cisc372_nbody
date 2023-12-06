@@ -12,7 +12,7 @@ vector3 *hVel, *d_hVel;
 vector3 *hPos, *d_hPos;
 double *mass;
 
-// vector3* values;
+vector3* values;
 vector3** accels;
 double* d_mass;
 //initHostMemory: Create storage for numObjects entities in our system
@@ -117,17 +117,18 @@ int main(int argc, char **argv)
 	//cudaMalloc((void**)&values,sizeof(vector3)*NUMENTITIES*NUMENTITIES);
     //cudaMalloc((void**)&accels,sizeof(vector3)*NUMENTITIES);
 
-	// Here we allocate space on the GPU for an array of vector pointers
-	cudaMalloc(&accels, sizeof(vector3*) * NUMENTITIES);
-	// Here we declare an array of vector pointers that lives on the host (not GPU!)
-	// We will put GPU pointers in this array, then memcpy those addresses to the device accels above!
-	vector3* host_accels[NUMENTITIES];
-	for (int i = 0; i < NUMENTITIES; i++) {
-		// Put GPU pointer into host accels
-		cudaMalloc(&host_accels[i], sizeof(vector3*) * NUMENTITIES);
+
+	// malloc and setup accels
+	cudaMalloc(&values, sizeof(vector3) * NUMENTITIES*NUMENTITIES);
+
+	vector3 **temp_accels = (vector3 **) malloc(sizeof(vector3 *) * NUMENTITIES);
+	for(int i = 0; i < NUMENTITIES; i++) {
+		temp_accels[i] = &values[i * NUMENTITIES];
 	}
-	// Move the addresses we've stored in the host array into the device array
-	cudaMemcpy(accels, host_accels, sizeof(vector3*) * NUMENTITIES, cudaMemcpyHostToDevice);
+
+	cudaMalloc(&accels, (sizeof(vector3 *)) * NUMENTITIES);
+
+	cudaMemcpy(accels, temp_accels, sizeof(vector3 *) * NUMENTITIES, cudaMemcpyHostToDevice);
 
 	
 	//copy to the device

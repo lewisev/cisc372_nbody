@@ -31,11 +31,21 @@ void compute(){
 				for (k=0;k<3;k++) {
 					distance[k] = hPos[i][k] - hPos[j][k];
 				}
+				//printf("row %d col %d distance %e %e %e\n", i, j, distance[0], distance[1], distance[2]);
 				double magnitude_sq = distance[0] * distance[0] + distance[1] * distance[1] + distance[2] * distance[2];
+				//printf("row %d col %d magnitude_sq %f\n", i, j, magnitude_sq);
 				double magnitude = sqrt(magnitude_sq);
 				double accelmag = -1 * GRAV_CONSTANT * mass[j] / magnitude_sq;
+				//printf("row %d col %d magnitude %f\n", i, j, magnitude);
+
 				FILL_VECTOR(accels[i][j], accelmag*distance[0]/magnitude, accelmag*distance[1]/magnitude, accelmag*distance[2]/magnitude);
-				//printf("row: %d col: %d value: %e, %e, %e\n", i, j, accels[i][j][0], accels[i][j][1], accels[i][j][2]);
+
+				/*
+				printf("row: %d col: %d value: %f, %f, %f\n", i, j, accelmag*distance[0]/magnitude,
+		 		accelmag*distance[1]/magnitude, 
+		 		accelmag*distance[2]/magnitude);
+				*/
+				//printf("row: %d col: %d value: %f, %f, %f\n", i, j, accels[i][j][0], accels[i][j][1], accels[i][j][2]);
 			}
 	}
 
@@ -48,8 +58,12 @@ void compute(){
 	}
 	//sum up the rows of our matrix to get effect on each entity, then update velocity and position.
 	for (i=0; i < NUMENTITIES; i++){
+
+		//printf("row: %d\n", i);
+
 		vector3 accel_sum = {0, 0, 0};
 		for (j=0; j < NUMENTITIES; j++) {
+			//printf("row: %d\tcol: %d\n", i, j);
 			for (k=0; k < 3; k++) {
 				accel_sum[k] += accels[i][j][k];
 			}

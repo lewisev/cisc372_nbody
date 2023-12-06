@@ -13,4 +13,4 @@ clean:
 run: nbody
 	./nbody
 out: nbody
-	./nbody > out.txt
+	./nbody > o.txt
