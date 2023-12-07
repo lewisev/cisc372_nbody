@@ -39,8 +39,9 @@ __global__ void compute_accels(vector3 **accels, vector3 *hPos, double *mass){
 
 
 __global__ void compute_velocities(vector3 **accels, vector3 *hPos, vector3 *hVel){
-	int row = blockIdx.x; // NUMENTITIES
-	int j, k;
+	int row = blockIdx.x; // 0 to NUMENTITIES
+	int j;
+	int k = threadIdx.x; // 0 to 3
 
 	if(row >= NUMENTITIES) {
 		return;
@@ -49,17 +50,13 @@ __global__ void compute_velocities(vector3 **accels, vector3 *hPos, vector3 *hVe
 	//sum up the rows of our matrix to get effect on each entity, then update velocity and position.
 	vector3 accel_sum = {0, 0, 0};
 	for (j=0; j < NUMENTITIES; j++) {
-		for (k=0; k < 3; k++) {
-			accel_sum[k] += accels[row][j][k];
-		}
+		accel_sum[k] += accels[row][j][k];
 	}
 
 	//compute the new velocity based on the acceleration and time interval
 	//compute the new position based on the velocity and time interval
-	for (k=0; k < 3; k++) {
-		hVel[row][k] += accel_sum[k] * INTERVAL;
-		hPos[row][k] += hVel[row][k] * INTERVAL;
-	}
+	hVel[row][k] += accel_sum[k] * INTERVAL;
+	hPos[row][k] += hVel[row][k] * INTERVAL;
 }
 
 // compute: Updates the positions and locations of the objects in the system based on gravity.
@@ -72,5 +69,5 @@ void compute(){
 	compute_accels<<<block_count, block_size>>>(accels, d_hPos, d_mass);
 
 	dim3 grid_dims (NUMENTITIES, 1, 1);
-	compute_velocities<<<grid_dims, 1>>>(accels, d_hPos, d_hVel);
+	compute_velocities<<<grid_dims, 3>>>(accels, d_hPos, d_hVel);
 }
