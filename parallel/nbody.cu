@@ -151,10 +151,11 @@ int main(int argc, char **argv)
     cudaFree(d_hVel);
 	cudaFree(d_mass);
 	    
-    //cudaFree(values);
+    cudaFree(values);
 	
 	// This doesn't free the rows of accels... it just frees their pointers
 	cudaFree(accels);
 
+	free(temp_accels);
 	freeHostMemory();
 }
