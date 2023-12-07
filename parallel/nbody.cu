@@ -89,8 +89,6 @@ void printSystem(FILE* handle){
 			fprintf(handle,"%lf,",hVel[i][j]);
 		}
 		fprintf(handle,"),m=%lf\n",mass[i]);
-
-		//printf("\n");
 	}
 }
 
@@ -108,27 +106,24 @@ int main(int argc, char **argv)
 	printSystem(stdout);
 	#endif
 
-	
-	//allocate memory
-	cudaMalloc((void**)&d_hPos,sizeof(vector3)*NUMENTITIES);
-    cudaMalloc((void**)&d_hVel,sizeof(vector3)*NUMENTITIES);
-	cudaMalloc((void**)&d_mass,sizeof(double)*NUMENTITIES);
-
-	//cudaMalloc((void**)&values,sizeof(vector3)*NUMENTITIES*NUMENTITIES);
-    //cudaMalloc((void**)&accels,sizeof(vector3)*NUMENTITIES);
-
 
 	// malloc and setup accels
 	cudaMalloc(&values, sizeof(vector3) * NUMENTITIES*NUMENTITIES);
-
+	cudaMalloc(&accels, (sizeof(vector3 *)) * NUMENTITIES);
 	vector3 **temp_accels = (vector3 **) malloc(sizeof(vector3 *) * NUMENTITIES);
+
+	//make an acceleration matrix which is NUMENTITIES squared in size;
 	for(int i = 0; i < NUMENTITIES; i++) {
 		temp_accels[i] = &values[i * NUMENTITIES];
 	}
 
-	cudaMalloc(&accels, (sizeof(vector3 *)) * NUMENTITIES);
-
 	cudaMemcpy(accels, temp_accels, sizeof(vector3 *) * NUMENTITIES, cudaMemcpyHostToDevice);
+
+
+	//allocate cuda memory
+	cudaMalloc((void**)&d_hPos,sizeof(vector3)*NUMENTITIES);
+    cudaMalloc((void**)&d_hVel,sizeof(vector3)*NUMENTITIES);
+	cudaMalloc((void**)&d_mass,sizeof(double)*NUMENTITIES);
 
 	
 	//copy to the device
@@ -144,8 +139,6 @@ int main(int argc, char **argv)
 	//copy results to host 
 	cudaMemcpy(hPos,d_hPos,sizeof(vector3)*NUMENTITIES,cudaMemcpyDeviceToHost);
     cudaMemcpy(hVel,d_hVel,sizeof(vector3)*NUMENTITIES,cudaMemcpyDeviceToHost);
-    //cudaMemcpy(mass,d_mass,sizeof(double),cudaMemcpyDeviceToHost);
-
 
 	clock_t t1=clock()-t0;
 #ifdef DEBUG
@@ -159,9 +152,8 @@ int main(int argc, char **argv)
 	cudaFree(d_mass);
 	    
     //cudaFree(values);
-	/**
-	* This doesn't free the rows of accels... it just frees their pointers
-	*/
+	
+	// This doesn't free the rows of accels... it just frees their pointers
 	cudaFree(accels);
 
 	freeHostMemory();

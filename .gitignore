@@ -1,2 +1,4 @@
-
+/serial/nbody
+/parallel/nbody
+*.o
 *.json
